@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_tra_class_user,tra_class user,model_tra_class,base.group_user,1,1,1,1
+access_tra_hobby_user,tra_hobby user,model_tra_hobby,base.group_user,1,1,1,1
+access_tra_student_user,tra_student user,model_tra_student,base.group_user,1,1,1,1

@@ -1,0 +1,779 @@
+{
+  "info": {
+    "name": "Student Management Odoo API",
+    "_postman_id": "5ac7f3cb-3d2c-43e8-9ef6-student-management",
+    "description": "Test collection for /edmanage-class and /edmanage-student APIs. Run Login first so Postman stores the Odoo session cookie.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8070"
+    },
+    {
+      "key": "db",
+      "value": "odoo"
+    },
+    {
+      "key": "login",
+      "value": "admin"
+    },
+    {
+      "key": "password",
+      "value": "admin"
+    },
+    {
+      "key": "class_id",
+      "value": ""
+    },
+    {
+      "key": "class_copy_id",
+      "value": ""
+    },
+    {
+      "key": "class_mass_copy_id",
+      "value": ""
+    },
+    {
+      "key": "student_id",
+      "value": ""
+    },
+    {
+      "key": "student_copy_id",
+      "value": ""
+    },
+    {
+      "key": "student_mass_copy_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Auth",
+      "item": [
+        {
+          "name": "Login Odoo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.result && json.result.uid).to.be.ok;",
+                  "  pm.collectionVariables.set('user_id', json.result.uid);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"params\": {\n    \"db\": \"{{db}}\",\n    \"login\": \"{{login}}\",\n    \"password\": \"{{password}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/web/session/authenticate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "web",
+                "session",
+                "authenticate"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Class APIs",
+      "item": [
+        {
+          "name": "Create Class",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create class success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.code).to.eql(200);",
+                  "  pm.expect(json.data.id).to.be.ok;",
+                  "  pm.collectionVariables.set('class_id', json.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"CLS-{{$timestamp}}\",\n  \"name\": \"Lop test {{$timestamp}}\",\n  \"description\": \"Lop tao tu Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edmanage-class",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Classes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-class?columnlist=[id,co,na,des]",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class"
+              ],
+              "query": [
+                {
+                  "key": "columnlist",
+                  "value": "[id,co,na,des]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Classes By Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-class/page/1?size=10&search=CLS&order=[co:1]&columnlist=[id,co,na,des]",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class",
+                "page",
+                "1"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "CLS"
+                },
+                {
+                  "key": "order",
+                  "value": "[co:1]"
+                },
+                {
+                  "key": "columnlist",
+                  "value": "[id,co,na,des]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Class By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-class/{{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class",
+                "{{class_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Class",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lop test da cap nhat\",\n  \"description\": \"Cap nhat tu Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edmanage-class/{{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class",
+                "{{class_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Copy Class",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Copy class success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.code).to.eql(200);",
+                  "  pm.collectionVariables.set('class_copy_id', json.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"copy\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edmanage-class/{{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class",
+                "{{class_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mass Copy Class",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Mass copy class success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.code).to.eql(200);",
+                  "  if (json.data && json.data.length) {",
+                  "    pm.collectionVariables.set('class_mass_copy_id', json.data[0].id);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idlist\": [\"{{class_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edmanage-class/copy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class",
+                "copy"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Classes JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-class/export?idlist=[{{class_id}}]&type=json&columnlist=[id,co,na,des]",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "idlist",
+                  "value": "[{{class_id}}]"
+                },
+                {
+                  "key": "type",
+                  "value": "json"
+                },
+                {
+                  "key": "columnlist",
+                  "value": "[id,co,na,des]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Classes CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-class/export?idlist=[{{class_id}}]&type=csv&columnlist=[id,co,na,des]",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "idlist",
+                  "value": "[{{class_id}}]"
+                },
+                {
+                  "key": "type",
+                  "value": "csv"
+                },
+                {
+                  "key": "columnlist",
+                  "value": "[id,co,na,des]"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Student APIs",
+      "item": [
+        {
+          "name": "Create Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create student success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.code).to.eql(200);",
+                  "  pm.expect(json.data.id).to.be.ok;",
+                  "  pm.collectionVariables.set('student_id', json.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"STU-{{$timestamp}}\",\n  \"fullname\": \"Nguyen Van Test\",\n  \"dob\": \"2000-02-04\",\n  \"sex\": true,\n  \"homecity\": \"Ha Noi\",\n  \"address\": \"Cau Giay\",\n  \"hobbies\": \"1\",\n  \"hair_color\": \"#111111\",\n  \"email\": \"student{{$timestamp}}@example.com\",\n  \"facebook\": \"https://facebook.com\",\n  \"class_id\": \"{{class_id}}\",\n  \"username\": \"stu{{$timestamp}}\",\n  \"password\": \"Abc@12345\",\n  \"description\": \"Hoc sinh tao tu Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edmanage-student",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Students",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-student?columnlist=[id,co,fu,do,se,hom,ad,ho,hc,em,fa,cl,us,pa,des]",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student"
+              ],
+              "query": [
+                {
+                  "key": "columnlist",
+                  "value": "[id,co,fu,do,se,hom,ad,ho,hc,em,fa,cl,us,pa,des]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Students By Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-student/page/1?size=10&search=STU&order=[co:1]&columnlist=[id,co,fu,em,cl,ho]",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student",
+                "page",
+                "1"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": "STU"
+                },
+                {
+                  "key": "order",
+                  "value": "[co:1]"
+                },
+                {
+                  "key": "columnlist",
+                  "value": "[id,co,fu,em,cl,ho]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Student By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-student/{{student_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student",
+                "{{student_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Nguyen Van Test Updated\",\n  \"homecity\": \"Da Nang\",\n  \"hobbies\": \"2\",\n  \"description\": \"Cap nhat tu Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edmanage-student/{{student_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student",
+                "{{student_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Copy Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Copy student success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.code).to.eql(200);",
+                  "  pm.collectionVariables.set('student_copy_id', json.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"copy\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edmanage-student/{{student_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student",
+                "{{student_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mass Copy Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Mass copy student success', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.code).to.eql(200);",
+                  "  if (json.data && json.data.length) {",
+                  "    pm.collectionVariables.set('student_mass_copy_id', json.data[0].id);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idlist\": [\"{{student_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edmanage-student/copy",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student",
+                "copy"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Students JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-student/export?idlist=[{{student_id}}]&type=json&columnlist=[id,co,fu,em,cl,ho]",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "idlist",
+                  "value": "[{{student_id}}]"
+                },
+                {
+                  "key": "type",
+                  "value": "json"
+                },
+                {
+                  "key": "columnlist",
+                  "value": "[id,co,fu,em,cl,ho]"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Students XLSX",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-student/export?idlist=[{{student_id}}]&type=xlsx&columnlist=[id,co,fu,em,cl,ho]",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "idlist",
+                  "value": "[{{student_id}}]"
+                },
+                {
+                  "key": "type",
+                  "value": "xlsx"
+                },
+                {
+                  "key": "columnlist",
+                  "value": "[id,co,fu,em,cl,ho]"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "99 - Cleanup",
+      "item": [
+        {
+          "name": "Delete Copied Students",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idlist\": [\"{{student_copy_id}}\", \"{{student_mass_copy_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edmanage-student/delete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student",
+                "delete"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Student",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-student/{{student_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-student",
+                "{{student_id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Copied Classes",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idlist\": [\"{{class_copy_id}}\", \"{{class_mass_copy_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/edmanage-class/delete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class",
+                "delete"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Class",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/edmanage-class/{{class_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "edmanage-class",
+                "{{class_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
