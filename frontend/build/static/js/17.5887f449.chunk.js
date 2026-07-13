@@ -1,2 +1,0 @@
-(this.webpackJsonpemilus=this.webpackJsonpemilus||[]).push([[17],{481:function(e,c,s){"use strict";s.r(c);s(0);var t=s(492),a=s(90),i=s(4);c.default=()=>Object(i.jsx)(t.a,{className:"management-content-card",title:"Qu\u1ea3n l\xfd l\u1edbp h\u1ecdc",children:Object(i.jsx)(a.a,{description:"Ch\u01b0a c\xf3 d\u1eef li\u1ec7u l\u1edbp h\u1ecdc"})})}}]);
-//# sourceMappingURL=17.5887f449.chunk.js.map
