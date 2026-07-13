@@ -1,0 +1,10 @@
+$kind: http-request
+name: Phân trang/tìm kiếm/sắp xếp lớp
+url: http://localhost:8070/edmanage-class/page/1?size=10&search=CNTT&order=[co:1]&columnlist=[id,co,na,des]
+method: GET
+queryParams:
+  size: "10"
+  search: CNTT
+  order: "[co:1]"
+  columnlist: "[id,co,na,des]"
+order: 4500058918382876

@@ -1,0 +1,12 @@
+$kind: http-request
+name: Import students csv
+url: http://localhost:8070/edmanage-student/import
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "type": "csv",
+      "attachment": "Y29kZSxmdWxsbmFtZSxkb2Isc2V4LGhvbWVjaXR5LGFkZHJlc3MsaG9iYmllcyxoYWlyX2NvbG9yLGVtYWlsLGZhY2Vib29rLGNsYXNzX2lkLHVzZXJuYW1lLHBhc3N3b3JkLGRlc2NyaXB0aW9uDQpTVF9JTVBPUlRfQ1NWXzAwMSxJbXBvcnQgQ1NWIFN0dWRlbnQgMDAxLDIwMDMtMDMtMTcsMSxIYW5vaSxJbXBvcnQgQ1NWIEFkZHJlc3MgMDAxLDMsIzMzMzMzMyxzdC5pbXBvcnQuY3N2LjAwMUBleGFtcGxlLmNvbSxodHRwczovL2ZhY2Vib29rLmNvbSwxLHN0X2ltcG9ydF9jc3ZfMDAxLFN0dWRlbnRAMTIzLEltcG9ydGVkIGZyb20gUG9zdG1hbiBDU1YNClNUX0lNUE9SVF9DU1ZfMDAyLEltcG9ydCBDU1YgU3R1ZGVudCAwMDIsMjAwMy0wNC0xOCwwLERhbmFuZyxJbXBvcnQgQ1NWIEFkZHJlc3MgMDAyLDYsIzQ0NDQ0NCxzdC5pbXBvcnQuY3N2LjAwMkBleGFtcGxlLmNvbSxodHRwczovL2ZhY2Vib29rLmNvbSwxLHN0X2ltcG9ydF9jc3ZfMDAyLFN0dWRlbnRAMTIzLEltcG9ydGVkIGZyb20gUG9zdG1hbiBDU1YNCg=="
+    }
+order: 5100

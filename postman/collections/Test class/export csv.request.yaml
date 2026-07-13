@@ -1,0 +1,24 @@
+$kind: http-request
+name: export csv
+url: http://localhost:8070/edmanage-class/export/1?type=csv&columnlist=[id,co,na,des]
+method: GET
+queryParams:
+  type: csv
+  columnlist: "[id,co,na,des]"
+scripts:
+  - type: afterResponse
+    code: "const res = pm.response.json();\r
+
+      \r
+
+      const csvText = CryptoJS.enc.Utf8.stringify(\r
+
+      \  CryptoJS.enc.Base64.parse(res.data.buffer)\r
+
+      );\r
+
+      \r
+
+      console.log(csvText);"
+    language: text/javascript
+order: 4503598977802087

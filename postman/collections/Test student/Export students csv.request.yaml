@@ -1,0 +1,17 @@
+$kind: http-request
+name: Export students csv
+url: http://localhost:8070/edmanage-student/export?type=csv&columnlist=[id,co,fu,em,cl,ho]
+method: GET
+queryParams:
+  type: csv
+  columnlist: "[id,co,fu,em,cl,ho]"
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      const csvText = CryptoJS.enc.Utf8.stringify(
+        CryptoJS.enc.Base64.parse(res.data.buffer)
+      );
+      console.log(csvText);
+    language: text/javascript
+order: 6100

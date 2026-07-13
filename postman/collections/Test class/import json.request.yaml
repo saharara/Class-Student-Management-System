@@ -1,0 +1,12 @@
+$kind: http-request
+name: import json
+url: http://localhost:8070/edmanage-class/import
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "type": "json",
+      "attachment": "W3siY29kZSI6IklNUE9SVF9KU09OXzAxIiwibmFtZSI6IkltcG9ydCBKU09OIDAxIiwiZGVzY3JpcHRpb24iOiJDcmVhdGVkIGZyb20gUG9zdG1hbiBKU09OIGltcG9ydCJ9LHsiY29kZSI6IklNUE9SVF9KU09OXzAyIiwibmFtZSI6IkltcG9ydCBKU09OIDAyIiwiZGVzY3JpcHRpb24iOiJDcmVhdGVkIGZyb20gUG9zdG1hbiBKU09OIGltcG9ydCJ9XQ=="
+    }
+order: 4503599700000001

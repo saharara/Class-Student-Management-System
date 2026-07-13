@@ -1,0 +1,11 @@
+$kind: http-request
+name: Mass delete students
+url: http://localhost:8070/edmanage-student/delete
+method: DELETE
+body:
+  type: json
+  content: |-
+    {
+      "idlist": [999998, 999999]
+    }
+order: 4400

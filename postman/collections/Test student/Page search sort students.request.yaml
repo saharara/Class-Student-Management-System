@@ -1,0 +1,10 @@
+$kind: http-request
+name: Page search sort students
+url: http://localhost:8070/edmanage-student/page/1?size=10&search=ST_POSTMAN&order=[co:1]&columnlist=[id,co,fu,em,cl,ho]
+method: GET
+queryParams:
+  size: "10"
+  search: ST_POSTMAN
+  order: "[co:1]"
+  columnlist: "[id,co,fu,em,cl,ho]"
+order: 2200

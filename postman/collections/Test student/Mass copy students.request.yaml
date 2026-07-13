@@ -1,0 +1,12 @@
+$kind: http-request
+name: Mass copy students
+url: http://localhost:8070/edmanage-student/copy
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "idlist": [1, 2],
+      "columnlist": "[id,co,fu,em,us]"
+    }
+order: 4300

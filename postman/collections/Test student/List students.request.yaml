@@ -1,0 +1,5 @@
+$kind: http-request
+name: List students
+url: http://localhost:8070/edmanage-student
+method: GET
+order: 2000

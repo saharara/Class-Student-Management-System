@@ -1,0 +1,7 @@
+$kind: http-request
+url: http://localhost:8070/edmanage-class/export/1?type=json&columnlist=[id,co,na,des]
+method: GET
+queryParams:
+  type: json
+  columnlist: "[id,co,na,des]"
+order: 4503596232460463

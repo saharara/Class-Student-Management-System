@@ -1,0 +1,12 @@
+$kind: http-request
+name: Copy one student
+url: http://localhost:8070/edmanage-student/1
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "action": "copy",
+      "columnlist": "[id,co,fu,em,us]"
+    }
+order: 4200

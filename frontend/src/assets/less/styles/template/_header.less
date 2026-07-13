@@ -1,0 +1,241 @@
+.menu-reflect-color(@color-1, @color-2) {
+
+    .ant-menu {
+        color: @color-1;
+
+        &.ant-menu-horizontal:not(.ant-menu-dark) {
+            > .ant-menu-item:hover, 
+            > .ant-menu-submenu:hover, 
+            > .ant-menu-item-active, 
+            > .ant-menu-submenu-active, 
+            > .ant-menu-item-open, 
+            > .ant-menu-submenu-open, 
+            > .ant-menu-submenu-selected {
+                border-bottom: 0;
+                color: @color-2;
+    
+                .ant-badge {
+                    color: @color-2;
+                }
+            }
+    
+            > .ant-menu-item-selected {
+                color: @color-1;
+                border-bottom: 0;
+    
+                .ant-badge {
+                    color: @color-1;
+                }
+            }
+        }
+
+        &:not(.ant-menu-dark)  {
+            a {
+                color: @color-1;
+
+                &:hover {
+                    color: @color-2;
+                }
+            }
+        }
+    }
+
+    .ant-badge {
+        color: @color-1;
+
+        .ant-badge-count {
+            box-shadow: none;
+        }
+    }
+ }
+
+.app-header {
+    position: fixed;
+    width: 100%;
+    left: 0;
+    z-index: @zindex-modal;
+    display: flex;
+    box-shadow: @header-box-shadow;
+
+    .app-header-wrapper {
+        display: flex;
+        width: 100%;
+
+        &.layout-top-nav {
+            max-width: @content-max-width;
+            margin: auto
+        }
+    }
+
+    .nav-icon {
+        font-size: 1.25rem;
+    }
+
+    &.ant-layout-header {
+        height: @header-height;
+        line-height: @header-height;
+        padding: 0;
+        background-color: @header-bg-base;
+    }
+
+    .nav {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        transition: all .2s ease;
+    }
+
+    .nav-right {
+        margin-left: auto;
+        padding: 0 1rem;
+        display: flex;
+    }
+
+    .nav-left {
+        display: flex;
+    }
+
+    .nav-right,
+    .nav-left {
+        .ant-menu {
+            
+            .ant-menu-item {
+                padding: 0px 1rem;
+                margin: 0;
+                line-height: @header-height;
+
+                &:hover {
+                    .ant-badge {
+                        color:  @primary-color;
+                    }
+                }
+            }
+        }
+    }
+
+    ul {
+        &.ant-menu {
+            line-height: @header-height;
+            border-bottom: 0;
+            background: transparent;
+        }
+    }
+
+
+
+    &.light {
+        .menu-reflect-color(rgba(@white, .85), @white)
+    }
+
+    &.dark {
+        & when (@theme = dark) {
+            .menu-reflect-color(@gray, @primary-color)
+        }
+    }
+
+    .print ({
+        display: none;
+    })
+}
+
+.nav-dropdown {
+    background-color: @white;
+    box-shadow: @shadow-2;
+    border-radius: @border-radius-base;
+
+    & when (@theme = dark) {
+        background-color: @component-background;
+    }
+}
+
+& when (@rtl-enable = true) {
+    .dir-rtl {
+        .nav-right {
+            margin-right: auto;
+            margin-left: unset;
+        }
+    }
+}
+.app-header.edmanage-header {
+    height: @header-height;
+    line-height: normal;
+    padding: 10px 16px 8px;
+    background-color: #f8fbff;
+    box-shadow: none;
+
+    &.ant-layout-header {
+        height: @header-height;
+        line-height: normal;
+        padding: 10px 16px 8px;
+        background-color: #f8fbff;
+    }
+
+    .edmanage-header-inner {
+        width: 100%;
+    }
+
+    .edmanage-logo-row {
+        height: 38px;
+        display: flex;
+        align-items: center;
+    }
+
+    .edmanage-logo {
+        height: auto;
+        padding: 0 14px;
+        width: auto !important;
+    }
+
+    .edmanage-logo-text {
+        color: #000;
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1;
+        font-family: Arial, 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+    }
+
+    .edmanage-divider {
+        height: 2px;
+        background-color: #163b7a;
+    }
+
+    .edmanage-breadcrumb-bar {
+        height: 32px;
+        margin-top: 8px;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background-color: #12377f;
+        color: #fff;
+        font-weight: 700;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .16);
+    }
+
+    .edmanage-sidebar-toggle {
+        height: 24px;
+        width: 24px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        background: transparent;
+        color: #fff;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .edmanage-sidebar-toggle:hover,
+    .edmanage-sidebar-toggle:focus {
+        color: #fff;
+        background-color: rgba(255, 255, 255, .12);
+        outline: none;
+    }
+
+    .edmanage-breadcrumb-home,
+    .edmanage-breadcrumb-current,
+    .edmanage-breadcrumb-separator {
+        line-height: 1;
+    }
+}

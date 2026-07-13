@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+  <record>
+    <code>CLS_XML_001</code>
+    <name>Class XML 001</name>
+    <description>Imported from sample XML file</description>
+  </record>
+  <record>
+    <code>CLS_XML_002</code>
+    <name>Class XML 002</name>
+    <description>Imported from sample XML file</description>
+  </record>
+</records>

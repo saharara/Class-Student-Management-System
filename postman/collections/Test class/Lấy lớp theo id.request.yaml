@@ -1,0 +1,5 @@
+$kind: http-request
+name: Lấy lớp theo id
+url: http://localhost:8070/edmanage-class/1
+method: GET
+order: 4486284166501567

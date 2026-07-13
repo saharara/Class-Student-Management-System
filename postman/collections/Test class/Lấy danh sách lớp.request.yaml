@@ -1,0 +1,5 @@
+$kind: http-request
+name: Lấy danh sách lớp
+url: http://localhost:8070/edmanage-class
+method: GET
+order: 4363362374453719

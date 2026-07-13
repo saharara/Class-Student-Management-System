@@ -1,0 +1,8 @@
+$kind: http-request
+name: Export student by id
+url: http://localhost:8070/edmanage-student/export/1?type=json&columnlist=[id,co,fu,em,cl,ho]
+method: GET
+queryParams:
+  type: json
+  columnlist: "[id,co,fu,em,cl,ho]"
+order: 6300

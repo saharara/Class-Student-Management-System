@@ -1,0 +1,24 @@
+$kind: http-request
+name: Create duplicate student
+url: http://localhost:8070/edmanage-student
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "code": "ST_POSTMAN_001",
+      "fullname": "Student Postman Duplicate",
+      "dob": "2003-05-12",
+      "sex": true,
+      "homecity": "Hanoi",
+      "address": "Duplicate Address",
+      "hobbies": 3,
+      "hair_color": "#111111",
+      "email": "st.postman.001@example.com",
+      "facebook": "https://facebook.com",
+      "class_id": 1,
+      "username": "st_postman_001",
+      "password": "Student@123",
+      "description": "Expected duplicate constraint test"
+    }
+order: 3100

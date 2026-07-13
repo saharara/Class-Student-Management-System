@@ -1,0 +1,9 @@
+$kind: http-request
+name: Mass export
+url: http://localhost:8070/edmanage-class/export?idlist=[1,2]&type=json&columnlist=[id,co,na,des]
+method: GET
+queryParams:
+  idlist: "[1,2]"
+  type: json
+  columnlist: "[id,co,na,des]"
+order: 4503599462079844

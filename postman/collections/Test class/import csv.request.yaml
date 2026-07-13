@@ -1,0 +1,12 @@
+$kind: http-request
+name: import csv
+url: http://localhost:8070/edmanage-class/import
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "type": "csv",
+      "attachment": "Y29kZSxuYW1lLGRlc2NyaXB0aW9uDQpJTVBPUlRfQ1NWXzAxLEltcG9ydCBDU1YgMDEsQ3JlYXRlZCBmcm9tIFBvc3RtYW4gQ1NWIGltcG9ydA0KSU1QT1JUX0NTVl8wMixJbXBvcnQgQ1NWIDAyLENyZWF0ZWQgZnJvbSBQb3N0bWFuIENTViBpbXBvcnQNCg=="
+    }
+order: 4503599700000002

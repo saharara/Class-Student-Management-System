@@ -1,0 +1,7 @@
+$kind: http-request
+name: List students with columnlist
+url: http://localhost:8070/edmanage-student?columnlist=[id,co,fu,em,cl,ho]
+method: GET
+queryParams:
+  columnlist: "[id,co,fu,em,cl,ho]"
+order: 2100

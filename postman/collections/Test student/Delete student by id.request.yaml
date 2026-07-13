@@ -1,0 +1,5 @@
+$kind: http-request
+name: Delete student by id
+url: http://localhost:8070/edmanage-student/999999
+method: DELETE
+order: 4500

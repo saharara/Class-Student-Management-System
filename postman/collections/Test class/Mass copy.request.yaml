@@ -1,0 +1,8 @@
+$kind: http-request
+name: Mass copy
+url: http://localhost:8070/edmanage-class/copy
+method: POST
+body:
+  type: json
+  content: "{\r\n  \"idlist\": [1, 2, 3]\r\n}"
+order: 4503578168784682

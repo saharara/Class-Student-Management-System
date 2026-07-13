@@ -1,0 +1,21 @@
+$kind: http-request
+url: http://localhost:8070/web/session/authenticate
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"jsonrpc\": \"2.0\",\r
+
+    \  \"params\": {\r
+
+    \    \"db\": \"odoo\",\r
+
+    \    \"login\": \"admin\",\r
+
+    \    \"password\": \"admin\"\r
+
+    \  }\r
+
+    }"
+order: 2717999148289150

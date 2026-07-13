@@ -1,0 +1,16 @@
+$kind: http-request
+name: Login
+url: http://localhost:8070/web/session/authenticate
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "jsonrpc": "2.0",
+      "params": {
+        "db": "odoo",
+        "login": "admin",
+        "password": "admin"
+      }
+    }
+order: 1000

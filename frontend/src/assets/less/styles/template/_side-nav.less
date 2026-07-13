@@ -1,0 +1,73 @@
+.side-nav {
+    height: auto;
+    position: fixed;
+    top: @header-height;
+    box-shadow: @side-nav-box-shadow;
+    z-index: @zindex-modal - 1;
+    direction: ltr;
+    border-radius: @border-radius-base;
+    overflow: hidden;
+    max-height: calc(100vh - @header-height - @layout-content-gutter);
+
+    & when (@theme = light) {
+        background-color: @white;
+    }
+    
+    .print ({
+        display: none;
+    }); 
+
+    &.side-nav-dark {
+        background-color: @menu-dark-bg;
+    }
+
+    .ant-layout-sider-children {
+        height: auto;
+        overflow: hidden;
+        border-radius: inherit;
+    }
+
+    .ant-menu {
+        height: auto !important;
+        border-radius: inherit;
+    }
+
+
+    .side-nav-exit {
+        padding: 8px 16px 12px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .side-nav-exit-btn {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 3px;
+        background: transparent;
+        color: #12377f;
+        cursor: pointer;
+        font-size: 22px;
+        line-height: 1;
+    }
+
+    .side-nav-exit-btn:hover,
+    .side-nav-exit-btn:focus {
+        color: @primary-color;
+        background: rgba(@primary-color, .08);
+        outline: none;
+    }
+    .hide-group-title {
+        .ant-menu-item-group-title {
+            display: none;
+        }
+    }
+}
+
+.mobile-nav-menu {
+    height: calc(100vh - @header-height - 10px);
+}

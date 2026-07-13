@@ -1,0 +1,7 @@
+$kind: http-request
+name: Lấy lớp theo id và columnlist
+url: http://localhost:8070/edmanage-class/1?columnlist=[id,co,na]
+method: GET
+queryParams:
+  columnlist: "[id,co,na]"
+order: 4491940566878462
