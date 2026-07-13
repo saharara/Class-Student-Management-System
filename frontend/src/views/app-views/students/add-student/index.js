@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, Input, message, Popover, Select } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -9,6 +9,9 @@ import {
 import { useHistory } from 'react-router-dom';
 import { ChromePicker } from 'react-color';
 import { APP_PREFIX_PATH } from 'configs/AppConfig';
+import ClassroomService from 'services/ClassroomService';
+import StudentService from 'services/StudentService';
+import { unwrapRecords } from 'services/OdooApiService';
 
 import './addStudent.css';
 
@@ -22,13 +25,7 @@ const FACEBOOK_PATTERN = /^https?:\/\/[0-9a-zA-Z.\-_]+$/;
 const PASSWORD_PATTERN = /^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[^A-Za-z0-9\s]).{8,}$/;
 const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 
-const EXISTING_STUDENTS = [
-  { code: 'SV001', email: 'huyenpham21205@gmail.com', username: 'huyenpn' },
-  { code: 'SV002', email: 'minhanh@example.com', username: 'minhanh' },
-  { code: 'SV003', email: 'ducnam@example.com', username: 'ducnam' },
-  { code: 'SV004', email: 'thuha@example.com', username: 'thuha' },
-  { code: 'SV005', email: 'giabao@example.com', username: 'giabao' },
-];
+const EXISTING_STUDENTS = [];
 
 const EMPTY_FORM = {
   code: '',
@@ -44,6 +41,15 @@ const EMPTY_FORM = {
   address: '',
   hobbies: [],
   description: '',
+};
+
+const HOBBY_BITS = {
+  sport: 1,
+  book: 2,
+  music: 4,
+  paint: 8,
+  travel: 16,
+  code: 32,
 };
 
 const HAIR_COLOR_OPTIONS = [
@@ -149,11 +155,34 @@ const AddStudent = () => {
   const [errors, setErrors] = useState({});
   const [hairColor, setHairColor] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
+  const [photoBase64, setPhotoBase64] = useState('');
+  const [photoFileName, setPhotoFileName] = useState('');
   const [showHairPicker, setShowHairPicker] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [classes, setClasses] = useState([]);
+  const [classLoading, setClassLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const currentHairColor = hairColor?.color || '#111111';
   const passwordChecks = getPasswordChecks(formData.password);
+
+  const loadClasses = async () => {
+    setClassLoading(true);
+    try {
+      const response = await ClassroomService.getAll({
+        columnlist: JSON.stringify(['id', 'code', 'name']),
+      });
+      setClasses(unwrapRecords(response));
+    } catch (error) {
+      message.error(error.message || 'Không tải được danh sách lớp học');
+    } finally {
+      setClassLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadClasses();
+  }, []);
 
   const updateField = (field, value) => {
     setFormData(prev => {
@@ -180,16 +209,75 @@ const AddStudent = () => {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const submitForm = ({ stayOnPage = false } = {}) => {
+  const resetForm = () => {
+    setFormData(EMPTY_FORM);
+    setErrors({});
+    setHairColor(null);
+    setPhotoPreview('');
+    setPhotoBase64('');
+    setPhotoFileName('');
+  };
+
+  const buildPayload = () => {
+    const payload = {
+      code: formData.code.trim(),
+      fullname: formData.fullname.trim(),
+      dob: formData.dob,
+      sex: formData.gender === 'male',
+      class_id: formData.classId,
+      email: formData.email.trim(),
+      facebook: formData.facebook.trim(),
+      username: formData.username.trim(),
+      password: formData.password,
+      homecity: formData.hometown.trim(),
+      address: formData.address.trim(),
+      hobbies: formData.hobbies.reduce((total, hobby) => total + (HOBBY_BITS[hobby] || 0), 0),
+      hair_color: hairColor?.color || '',
+      description: formData.description.trim(),
+    };
+
+    if (photoBase64) {
+      payload.attachment = photoBase64;
+      payload.attachment_filename = photoFileName;
+    }
+
+    return payload;
+  };
+
+  const submitForm = async ({ stayOnPage = false } = {}) => {
     if (!validateForm()) {
       message.error('Thêm mới học sinh thất bại');
       return;
     }
 
-    message.success('Thêm mới thành công');
+    setSubmitting(true);
+    try {
+      const response = await StudentService.create(buildPayload());
+      message.success(response.message || 'Thêm mới thành công');
 
-    if (!stayOnPage) {
+      if (stayOnPage) {
+        resetForm();
+        return;
+      }
+
       history.push(`${APP_PREFIX_PATH}/students`);
+    } catch (error) {
+      const errorMessage = error.message || 'Thêm mới học sinh thất bại';
+      const lowerMessage = errorMessage.toLowerCase();
+
+      if (lowerMessage.includes('mã học sinh')) {
+        setErrors(prev => ({ ...prev, code: errorMessage }));
+      } else if (lowerMessage.includes('email')) {
+        setErrors(prev => ({ ...prev, email: errorMessage }));
+      } else if (lowerMessage.includes('tài khoản')) {
+        setErrors(prev => ({ ...prev, username: errorMessage }));
+      } else if (lowerMessage.includes('lớp')) {
+        setErrors(prev => ({ ...prev, classId: errorMessage }));
+      }
+
+      message.error(errorMessage);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -213,6 +301,14 @@ const AddStudent = () => {
     }
 
     setPhotoPreview(URL.createObjectURL(file));
+    setPhotoFileName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      setPhotoBase64(result.includes(',') ? result.split(',')[1] : result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const hairColorPicker = (
@@ -379,11 +475,14 @@ const AddStudent = () => {
                   className="add-student-select"
                   placeholder="Lớp học*"
                   value={formData.classId || undefined}
+                  loading={classLoading}
                   onChange={value => updateField('classId', value)}
                 >
-                  <Option value="10A1">10A1</Option>
-                  <Option value="10A2">10A2</Option>
-                  <Option value="10A3">10A3</Option>
+                  {classes.map(item => (
+                    <Option key={item.id} value={item.id}>
+                      {item.code ? item.code + ' - ' + item.name : item.name}
+                    </Option>
+                  ))}
                 </Select>
                 {errors.classId && <div className="add-student-error">{errors.classId}</div>}
               </div>
@@ -392,6 +491,7 @@ const AddStudent = () => {
                 className="add-student-plus-btn"
                 type="primary"
                 icon={<PlusOutlined />}
+                onClick={() => history.push(`${APP_PREFIX_PATH}/classrooms/add`)}
               />
             </div>
 
@@ -554,6 +654,7 @@ const AddStudent = () => {
             <Button
               type="primary"
               className="add-student-save-btn"
+              loading={submitting}
               onClick={() => submitForm()}
             >
               Lưu
@@ -561,6 +662,7 @@ const AddStudent = () => {
 
             <Button
               className="add-student-save-continue-btn"
+              loading={submitting}
               onClick={() => submitForm({ stayOnPage: true })}
             >
               Lưu và tiếp tục

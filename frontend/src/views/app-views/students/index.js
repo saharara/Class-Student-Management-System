@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Avatar, Button, Card, Checkbox, Input, message, Table, Tooltip } from 'antd';
 import {
   CaretDownOutlined,
@@ -15,6 +15,8 @@ import {
 import { Resizable } from 'react-resizable';
 import { useHistory } from 'react-router-dom';
 import { APP_PREFIX_PATH } from 'configs/AppConfig';
+import StudentService from 'services/StudentService';
+import { unwrapRecords } from 'services/OdooApiService';
 
 const HOBBY_OPTIONS = [
   { bit: 1, label: 'Chơi thể thao' },
@@ -62,236 +64,32 @@ const defaultVisibleColumnKeys = [
   'email',
 ];
 
-const initialStudents = [
-  {
-    key: '1',
-    code: 'SV001',
-    classCode: '10A1',
-    name: 'Phạm Ngọc Huyền',
-    avatar: '/img/avatars/thumb-1.jpg',
-    birthday: '2005-12-22',
-    gender: 'Nữ',
-    hometown: 'Hà Nội',
-    address: 'Tổ 38A, Phường Thanh Xuân Trung, Thanh Xuân, Hà Nội',
-    hobbyMask: 1 | 2 | 4,
-    hairColor: { name: 'Đen', value: '#111111' },
-    email: 'huyenpham21205@gmail.com',
-    facebook: 'fb.com/huyen.pham',
-    phone: '0912345678',
-    username: 'huyenpn',
-    password: '******',
-    description: 'Lớp trưởng, học lực tốt, tham gia tích cực các hoạt động ngoại khóa.'
-  },
-  {
-    key: '2',
-    code: 'SV002',
-    classCode: '10A1',
-    name: 'Nguyễn Minh Anh',
-    avatar: '/img/avatars/thumb-2.jpg',
-    birthday: '2005-04-18',
-    gender: 'Nữ',
-    hometown: 'Hải Phòng',
-    address: 'Số 21, đường Lạch Tray, Ngô Quyền, Hải Phòng',
-    hobbyMask: 2 | 8 | 16,
-    hairColor: { name: 'Nâu', value: '#7a4a24' },
-    email: 'minhanh@example.com',
-    facebook: 'fb.com/minh.anh',
-    phone: '0988123456',
-    username: 'minhanh',
-    password: '******',
-    description: 'Yêu thích vẽ tranh và đọc sách, thường phụ trách trang trí lớp.'
-  },
-  {
-    key: '3',
-    code: 'SV003',
-    classCode: '10A1',
-    name: 'Trần Đức Nam',
-    avatar: '/img/avatars/thumb-3.jpg',
-    birthday: '2004-09-02',
-    gender: 'Nam',
-    hometown: 'Đà Nẵng',
-    address: 'Khu đô thị Hòa Xuân, Cẩm Lệ, Đà Nẵng',
-    hobbyMask: 1 | 32,
-    hairColor: { name: 'Đen', value: '#151515' },
-    email: 'ducnam@example.com',
-    facebook: 'fb.com/ducnam.tran',
-    phone: '0909123123',
-    username: 'ducnam',
-    password: '******',
-    description: 'Có nền tảng lập trình tốt, tham gia câu lạc bộ tin học.'
-  },
-  {
-    key: '4',
-    code: 'SV004',
-    classCode: '10A1',
-    name: 'Lê Thu Hà',
-    avatar: '/img/avatars/thumb-4.jpg',
-    birthday: '2005-07-11',
-    gender: 'Nữ',
-    hometown: 'Hà Nam',
-    address: 'Phủ Lý, Hà Nam',
-    hobbyMask: 4 | 8,
-    hairColor: { name: 'Nâu sáng', value: '#b8743b' },
-    email: 'thuha@example.com',
-    facebook: 'fb.com/thuha.le',
-    phone: '0977001122',
-    username: 'thuha',
-    password: '******',
-    description: 'Thích âm nhạc và vẽ, có khả năng thuyết trình tốt.'
-  },
-  {
-    key: '5',
-    code: 'SV005',
-    classCode: '10A1',
-    name: 'Đỗ Gia Bảo',
-    avatar: '/img/avatars/thumb-5.jpg',
-    birthday: '2004-01-30',
-    gender: 'Nam',
-    hometown: 'Nam Định',
-    address: 'Mỹ Lộc, Nam Định',
-    hobbyMask: 1 | 32,
-    hairColor: { name: 'Đen', value: '#000000' },
-    email: 'giabao@example.com',
-    facebook: 'fb.com/giabao.do',
-    phone: '0966332211',
-    username: 'giabao',
-    password: '******',
-    description: 'Năng động, thích cầu lông và các hoạt động thi đấu nhóm.'
-  },
-  {
-    key: '6',
-    code: 'SV006',
-    classCode: '10A1',
-    name: 'Vũ Khánh Linh',
-    avatar: '/img/avatars/thumb-6.jpg',
-    birthday: '2005-03-08',
-    gender: 'Nữ',
-    hometown: 'Bắc Ninh',
-    address: 'Từ Sơn, Bắc Ninh',
-    hobbyMask: 4 | 16,
-    hairColor: { name: 'Nâu đen', value: '#3b2a23' },
-    email: 'khanhlinh@example.com',
-    facebook: 'fb.com/khanhlinh.vu',
-    phone: '0944556677',
-    username: 'khanhlinh',
-    password: '******',
-    description: 'Yêu thích du lịch, hay hỗ trợ lớp trong các buổi sinh hoạt tập thể.'
-  },
-  {
-    key: '7',
-    code: 'SV007',
-    classCode: '10A1',
-    name: 'Hoàng Việt Anh',
-    avatar: '/img/avatars/thumb-7.jpg',
-    birthday: '2004-10-19',
-    gender: 'Nam',
-    hometown: 'Nghệ An',
-    address: 'Thành phố Vinh, Nghệ An',
-    hobbyMask: 1 | 16,
-    hairColor: { name: 'Đen', value: '#171717' },
-    email: 'vietanh@example.com',
-    facebook: 'fb.com/vietanh.hoang',
-    phone: '0933445566',
-    username: 'vietanh',
-    password: '******',
-    description: 'Thích chạy bộ và các hoạt động thể thao ngoài trời.'
-  },
-  {
-    key: '8',
-    code: 'SV008',
-    classCode: '10A1',
-    name: 'Bùi Phương Thảo',
-    avatar: '/img/avatars/thumb-8.jpg',
-    birthday: '2005-06-25',
-    gender: 'Nữ',
-    hometown: 'Thái Bình',
-    address: 'Quỳnh Phụ, Thái Bình',
-    hobbyMask: 2 | 4 | 16,
-    hairColor: { name: 'Hạt dẻ', value: '#8b5a2b' },
-    email: 'phuongthao@example.com',
-    facebook: 'fb.com/phuongthao.bui',
-    phone: '0922334455',
-    username: 'phuongthao',
-    password: '******',
-    description: 'Chăm chỉ, thích đọc sách, âm nhạc và các chuyến trải nghiệm.'
-  },
-  {
-    key: '9',
-    code: 'SV009',
-    classCode: '10A1',
-    name: 'Phan Tuấn Kiệt',
-    avatar: '/img/avatars/thumb-9.jpg',
-    birthday: '2004-12-01',
-    gender: 'Nam',
-    hometown: 'TP. Hồ Chí Minh',
-    address: 'Quận Bình Thạnh, TP. Hồ Chí Minh',
-    hobbyMask: 8 | 32,
-    hairColor: { name: 'Đen', value: '#101010' },
-    email: 'tuankiet@example.com',
-    facebook: 'fb.com/tuankiet.phan',
-    phone: '0911002233',
-    username: 'tuankiet',
-    password: '******',
-    description: 'Có tư duy logic tốt, thích nhiếp ảnh và lập trình web.'
-  },
-  {
-    key: '10',
-    code: 'SV010',
-    classCode: '10A2',
-    name: 'Ngô Bảo Châu',
-    avatar: '/img/avatars/thumb-10.jpg',
-    birthday: '2005-08-14',
-    gender: 'Nữ',
-    hometown: 'Thanh Hóa',
-    address: 'Đông Sơn, Thanh Hóa',
-    hobbyMask: 2 | 16,
-    hairColor: { name: 'Nâu hạt dẻ', value: '#7b4a21' },
-    email: 'baochau@example.com',
-    facebook: 'fb.com/baochau.ngo',
-    phone: '0909887766',
-    username: 'baochau',
-    password: '******',
-    description: 'Học tập ổn định, thích đọc sách và tham gia các chuyến dã ngoại.'
-  },
-  {
-    key: '11',
-    code: 'SV011',
-    classCode: '10A2',
-    name: 'Đặng Minh Quân',
-    avatar: '/img/avatars/thumb-11.jpg',
-    birthday: '2004-05-09',
-    gender: 'Nam',
-    hometown: 'Quảng Ninh',
-    address: 'Hạ Long, Quảng Ninh',
-    hobbyMask: 1 | 4 | 32,
-    hairColor: { name: 'Đen', value: '#0f0f0f' },
-    email: 'minhquan@example.com',
-    facebook: 'fb.com/minhquan.dang',
-    phone: '0933778899',
-    username: 'minhquan',
-    password: '******',
-    description: 'Năng nổ trong hoạt động nhóm, thích thể thao, âm nhạc và lập trình.'
-  },
-  {
-    key: '12',
-    code: 'SV012',
-    classCode: '10A3',
-    name: 'Mai Anh Thư',
-    avatar: '/img/avatars/thumb-12.jpg',
-    birthday: '2005-11-03',
-    gender: 'Nữ',
-    hometown: 'Huế',
-    address: 'Phú Nhuận, thành phố Huế',
-    hobbyMask: 4 | 8 | 16,
-    hairColor: { name: 'Nâu sáng', value: '#a96b32' },
-    email: 'anhthu@example.com',
-    facebook: 'fb.com/anhthu.mai',
-    phone: '0977889900',
-    username: 'anhthu',
-    password: '******',
-    description: 'Yêu thích nghệ thuật, có khả năng tổ chức và hỗ trợ truyền thông lớp.'
-  }
-];
+const mapStudent = (record, index) => {
+  const attachment = record.attachment ? 'data:image/png;base64,' + record.attachment : '';
+  const hairColor = record.hair_color || '';
+
+  return {
+    key: String(record.id),
+    id: record.id,
+    code: record.code || '',
+    classCode: record.class_id ? String(record.class_id) : '',
+    name: record.fullname || '',
+    avatar: attachment,
+    stt: String(record.id || index + 1).padStart(5, '0'),
+    birthday: record.dob || '',
+    gender: record.sex ? 'Nam' : 'Nữ',
+    hometown: record.homecity || '',
+    address: record.address || '',
+    hobbyMask: Number(record.hobbies || 0),
+    hairColor: { name: hairColor, value: hairColor || 'transparent' },
+    email: record.email || '',
+    facebook: record.facebook || '',
+    phone: '',
+    username: record.username || '',
+    password: record.password ? '******' : '',
+    description: record.description || '',
+  };
+};
 
 const ResizableTitle = props => {
   const { onResize, width, children, ...restProps } = props;
@@ -345,7 +143,7 @@ const EMPTY_ADVANCED_SEARCH = {
 
 const Students = () => {
   const history = useHistory();
-  const [students, setStudents] = useState(initialStudents);
+  const [students, setStudents] = useState([]);
   const [columns, setColumns] = useState(initialColumns);
   const [visibleColumnKeys, setVisibleColumnKeys] = useState(defaultVisibleColumnKeys);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -356,6 +154,45 @@ const Students = () => {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [quickSearch, setQuickSearch] = useState('');
   const [advancedSearch, setAdvancedSearch] = useState(EMPTY_ADVANCED_SEARCH);
+  const [loading, setLoading] = useState(false);
+
+  const loadStudents = async (search = quickSearch) => {
+    setLoading(true);
+    try {
+      const response = await StudentService.getPage(1, {
+        size: 100,
+        search: search || undefined,
+        columnlist: JSON.stringify([
+          'id',
+          'code',
+          'fullname',
+          'dob',
+          'sex',
+          'homecity',
+          'address',
+          'hobbies',
+          'hair_color',
+          'email',
+          'facebook',
+          'class_id',
+          'username',
+          'password',
+          'description',
+          'attachment',
+        ]),
+      });
+      setStudents(unwrapRecords(response).map(mapStudent));
+    } catch (error) {
+      message.error(error.message || 'Không tải được dữ liệu học sinh');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStudents('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const resetAdvancedSearch = () => {
     setAdvancedSearch({ ...EMPTY_ADVANCED_SEARCH });
@@ -402,7 +239,9 @@ const Students = () => {
     });
   };
 
-  const runAction = action => {
+  const selectedIds = () => selectedRowKeys.map(key => Number(key)).filter(Boolean);
+
+  const runAction = async action => {
     setShowActionMenu(false);
 
     if (action === 'delete') {
@@ -410,19 +249,35 @@ const Students = () => {
         message.warning('Bạn chưa chọn dữ liệu để xóa');
         return;
       }
-      setStudents(prev => prev.filter(student => !selectedRowKeys.includes(student.key)));
-      setSelectedRowKeys([]);
-      message.success('Đã xóa dữ liệu đã chọn');
+      try {
+        const response = await StudentService.massDelete(selectedIds());
+        setSelectedRowKeys([]);
+        message.success(response.message || 'Đã xóa dữ liệu đã chọn');
+        loadStudents();
+      } catch (error) {
+        message.error(error.message || 'Xóa dữ liệu thất bại');
+      }
       return;
     }
 
     if (action === 'copy') {
-      message.success('Đã sao chép dữ liệu đã chọn');
+      if (!selectedRowKeys.length) {
+        message.warning('Bạn chưa chọn dữ liệu để sao chép');
+        return;
+      }
+      try {
+        const response = await StudentService.massCopy(selectedIds());
+        setSelectedRowKeys([]);
+        message.success(response.message || 'Đã sao chép dữ liệu đã chọn');
+        loadStudents();
+      } catch (error) {
+        message.error(error.message || 'Sao chép dữ liệu thất bại');
+      }
       return;
     }
 
     if (action === 'import') {
-      message.info('Chức năng nhập file đang chờ kết nối backend');
+      message.info('Chức năng nhập file học sinh sẽ được nối ở bước import');
       return;
     }
 
@@ -445,11 +300,32 @@ const Students = () => {
     );
   };
 
-  const ActionButtons = () => (
+  const handleDeleteOne = async record => {
+    try {
+      const response = await StudentService.remove(record.id);
+      message.success(response.message || 'Xóa thành công');
+      setSelectedRowKeys(prev => prev.filter(key => key !== record.key));
+      loadStudents();
+    } catch (error) {
+      message.error(error.message || 'Xóa thất bại');
+    }
+  };
+
+  const handleCopyOne = async record => {
+    try {
+      const response = await StudentService.copy(record.id);
+      message.success(response.message || 'Sao chép thành công');
+      loadStudents();
+    } catch (error) {
+      message.error(error.message || 'Sao chép thất bại');
+    }
+  };
+
+  const ActionButtons = ({ record }) => (
     <div className="student-table-actions">
-      <Tooltip title="Xóa"><DeleteOutlined /></Tooltip>
+      <Tooltip title="Xóa"><DeleteOutlined onClick={() => handleDeleteOne(record)} /></Tooltip>
       <Tooltip title="Sửa"><EditOutlined /></Tooltip>
-      <Tooltip title="Nhân bản"><CopyOutlined /></Tooltip>
+      <Tooltip title="Nhân bản"><CopyOutlined onClick={() => handleCopyOne(record)} /></Tooltip>
       <Tooltip title="Tải xuống"><DownloadOutlined /></Tooltip>
       <Tooltip title="Xem"><EyeOutlined /></Tooltip>
     </div>
@@ -505,7 +381,7 @@ const Students = () => {
         width: 154,
         fixed: 'right',
         align: 'center',
-        render: () => <ActionButtons />
+        render: (_, record) => <ActionButtons record={record} />
       }
     ];
   })();
@@ -575,6 +451,7 @@ const Students = () => {
             <Input
               value={quickSearch}
               onChange={event => setQuickSearch(event.target.value)}
+              onPressEnter={() => loadStudents()}
               prefix={<SearchOutlined />}
               suffix={<SlidersOutlined onClick={() => setShowAdvancedSearch(prev => !prev)} />}
               placeholder="Tìm kiếm"
@@ -643,6 +520,7 @@ const Students = () => {
           components={{ header: { cell: ResizableTitle } }}
           columns={renderedColumns}
           dataSource={filteredStudents}
+          loading={loading}
           rowSelection={{ fixed: true, selectedRowKeys, onChange: setSelectedRowKeys }}
           pagination={{
             defaultPageSize: 10,

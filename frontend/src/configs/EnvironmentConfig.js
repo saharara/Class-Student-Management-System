@@ -1,13 +1,15 @@
+const API_ENDPOINT_URL = process.env.REACT_APP_API_BASE_URL || '';
+
 const dev = {
-  API_ENDPOINT_URL: 'https://jsonplaceholder.typicode.com'
+  API_ENDPOINT_URL,
 };
 
 const prod = {
-  API_ENDPOINT_URL: 'https://api.prod.com'
+  API_ENDPOINT_URL,
 };
 
 const test = {
-  API_ENDPOINT_URL: 'https://api.test.com'
+  API_ENDPOINT_URL,
 };
 
 const getEnv = () => {
@@ -19,7 +21,7 @@ const getEnv = () => {
 		case 'test':
 			return test
 		default:
-			break;
+			return dev;
 	}
 }
 

@@ -51,8 +51,8 @@
   max-width: 1320px;
   margin: 0 auto;
   padding: 28px 40px 38px;
-  border: 2px solid #143c91;
-  border-radius: 8px;
+  border: 0;
+  border-radius: 0;
   background: #ffffff;
   box-sizing: border-box;
 }
@@ -800,4 +800,16 @@
 .add-student-error {
   font-size: 13px !important;
   font-weight: 600 !important;
+}
+
+/* ================= REMOVE FORM SHADOW ================= */
+
+.add-student-frame,
+.add-student-top,
+.add-student-wide-fields {
+  box-shadow: none !important;
+}
+
+.add-student-back-btn {
+  box-shadow: none !important;
 }
