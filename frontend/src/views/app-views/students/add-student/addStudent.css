@@ -10,22 +10,24 @@
 /* ================= BACK BUTTON ================= */
 
 .add-student-back-btn {
-  position: fixed;
-  top: 18px;
-  left: 18px;
-  z-index: 50;
-  width: 58px;
-  height: 44px;
+  position: absolute;
+  top: 32px;
+  left: 34px;
+  z-index: 20;
+  width: 42px;
+  height: 42px;
   padding: 0;
-  border: 0;
-  background: transparent;
-  color: #143c91;
+  border: 2px solid #163b7a;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #12377f;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 46px;
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .12);
 }
 
 .add-student-back-btn:hover,
@@ -703,4 +705,99 @@
 .add-student-top-fields {
   grid-auto-rows: 96px !important;
   row-gap: 18px !important;
+}
+/* ================= VALIDATION FEEDBACK ================= */
+
+.add-student-photo-box {
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.add-student-file-input {
+  display: none;
+}
+
+.add-student-field.has-error .ant-input,
+.add-student-class-field.has-error .ant-select-selector,
+.add-student-field.has-error .add-student-password-box,
+.add-student-field.has-error .add-student-color-picker-trigger {
+  border-color: #d93025 !important;
+}
+
+.add-student-error {
+  margin: 2px 0 0 4px;
+  color: #d93025;
+  font-family: "Times New Roman", serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.add-student-password-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+  margin: 4px 0 0 4px;
+  font-family: "Times New Roman", serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 16px;
+  color: #d93025;
+}
+
+.add-student-password-checks span.passed {
+  color: #188038;
+}
+
+.add-student-top-fields {
+  grid-auto-rows: minmax(124px, auto) !important;
+}
+
+/* ================= MATCH STUDENT MANAGEMENT FONT ================= */
+
+.add-student-page,
+.add-student-page * {
+  font-family: Arial, 'Roboto', 'Segoe UI', Tahoma, sans-serif !important;
+}
+
+.add-student-title {
+  font-size: 32px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #0f2844;
+}
+
+.add-student-field > span,
+.add-student-class-field > span,
+.add-student-gender > span {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
+.add-student-frame .ant-input,
+.add-student-frame .ant-select-selection-item,
+.add-student-frame .ant-select-selection-placeholder,
+.add-student-color-picker-trigger,
+.add-student-password-input,
+.add-student-gender-box label {
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+
+.add-student-upload-btn,
+.add-student-save-btn,
+.add-student-save-continue-btn {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.add-student-photo-label {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.add-student-error {
+  font-size: 13px !important;
+  font-weight: 600 !important;
 }
