@@ -93,6 +93,8 @@ class ApiNormalizer:
         field = self.service.model._fields[field_name]
         if value in ("", None):
             if field.type == "many2one":
+                if field.required:
+                    raise ValidationError("Lớp học không tồn tại. Vui lòng chọn lớp hợp lệ.")
                 return False
             if field.type == "integer":
                 return 0
@@ -100,13 +102,31 @@ class ApiNormalizer:
 
         if field.type == "many2one":
             related_model = request.env[field.comodel_name]
+            if isinstance(value, dict):
+                value = value.get("id") or value.get("value") or value.get("code") or value.get("name")
+
+            if isinstance(value, str):
+                value = value.strip()
+
             if isinstance(value, str) and value.isdigit():
+                record = related_model.browse(int(value)).exists()
+                if record:
+                    return record.id
                 record = related_model.search([("code", "=", value)], limit=1)
-                return record.id if record else int(value)
+                if record:
+                    return record.id
+                raise ValidationError("Lớp học không tồn tại. Vui lòng chọn lớp hợp lệ.")
+
             if isinstance(value, int):
-                return int(value)
+                record = related_model.browse(value).exists()
+                if record:
+                    return record.id
+                raise ValidationError("Lớp học không tồn tại. Vui lòng chọn lớp hợp lệ.")
+
             record = related_model.search(["|", ("code", "=", value), ("name", "=", value)], limit=1)
-            return record.id if record else value
+            if record:
+                return record.id
+            raise ValidationError("Lớp học không tồn tại. Vui lòng chọn lớp hợp lệ.")
 
         if field.type == "integer":
             try:

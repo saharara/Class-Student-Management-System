@@ -52,8 +52,10 @@ const HOBBY_BITS = {
   code: 32,
 };
 
+const DEFAULT_HAIR_COLOR = { value: 'black', label: 'Đen', color: '#111111' };
+
 const HAIR_COLOR_OPTIONS = [
-  { value: 'black', label: 'Đen', color: '#111111' },
+  DEFAULT_HAIR_COLOR,
   { value: 'dark-brown', label: 'Nâu đen', color: '#3b2a23' },
   { value: 'brown', label: 'Nâu', color: '#7a4a24' },
   { value: 'chestnut', label: 'Hạt dẻ', color: '#8b5a2b' },
@@ -147,13 +149,39 @@ const VALIDATED_FIELDS = [
   'hairColor',
 ];
 
+const SERVER_FIELD_MAP = {
+  code: 'code',
+  fullname: 'fullname',
+  dob: 'dob',
+  class_id: 'classId',
+  classId: 'classId',
+  email: 'email',
+  facebook: 'facebook',
+  username: 'username',
+  password: 'password',
+  homecity: 'hometown',
+  address: 'address',
+  hair_color: 'hairColor',
+};
+
+const mapServerErrors = serverErrors => {
+  if (!serverErrors || typeof serverErrors !== 'object') {
+    return {};
+  }
+
+  return Object.keys(serverErrors).reduce((mapped, field) => {
+    const localField = SERVER_FIELD_MAP[field] || field;
+    mapped[localField] = serverErrors[field];
+    return mapped;
+  }, {});
+};
 const AddStudent = () => {
   const history = useHistory();
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
-  const [hairColor, setHairColor] = useState(null);
+  const [hairColor, setHairColor] = useState(DEFAULT_HAIR_COLOR);
   const [photoPreview, setPhotoPreview] = useState('');
   const [photoBase64, setPhotoBase64] = useState('');
   const [photoFileName, setPhotoFileName] = useState('');
@@ -172,7 +200,11 @@ const AddStudent = () => {
       const response = await ClassroomService.getAll({
         columnlist: JSON.stringify(['id', 'code', 'name']),
       });
-      setClasses(unwrapRecords(response));
+      setClasses(
+        unwrapRecords(response)
+          .map(item => ({ ...item, id: Number(item.id) }))
+          .filter(item => Number.isInteger(item.id) && item.id > 0)
+      );
     } catch (error) {
       message.error(error.message || 'Không tải được danh sách lớp học');
     } finally {
@@ -212,19 +244,19 @@ const AddStudent = () => {
   const resetForm = () => {
     setFormData(EMPTY_FORM);
     setErrors({});
-    setHairColor(null);
+    setHairColor(DEFAULT_HAIR_COLOR);
     setPhotoPreview('');
     setPhotoBase64('');
     setPhotoFileName('');
   };
 
-  const buildPayload = () => {
+  const buildPayload = selectedClass => {
     const payload = {
       code: formData.code.trim(),
       fullname: formData.fullname.trim(),
       dob: formData.dob,
       sex: formData.gender === 'male',
-      class_id: formData.classId,
+      class_id: selectedClass?.code || Number(formData.classId),
       email: formData.email.trim(),
       facebook: formData.facebook.trim(),
       username: formData.username.trim(),
@@ -232,7 +264,7 @@ const AddStudent = () => {
       homecity: formData.hometown.trim(),
       address: formData.address.trim(),
       hobbies: formData.hobbies.reduce((total, hobby) => total + (HOBBY_BITS[hobby] || 0), 0),
-      hair_color: hairColor?.color || '',
+      hair_color: hairColor?.color || DEFAULT_HAIR_COLOR.color,
       description: formData.description.trim(),
     };
 
@@ -250,9 +282,16 @@ const AddStudent = () => {
       return;
     }
 
+    const selectedClass = classes.find(item => item.id === Number(formData.classId));
+    if (!selectedClass) {
+      const errorMessage = 'Lớp học không tồn tại. Vui lòng tải lại danh sách lớp và chọn lại.';
+      setErrors(prev => ({ ...prev, classId: errorMessage }));
+      message.error(errorMessage);
+      return;
+    }
     setSubmitting(true);
     try {
-      const response = await StudentService.create(buildPayload());
+      const response = await StudentService.create(buildPayload(selectedClass));
       message.success(response.message || 'Thêm mới thành công');
 
       if (stayOnPage) {
@@ -265,7 +304,10 @@ const AddStudent = () => {
       const errorMessage = error.message || 'Thêm mới học sinh thất bại';
       const lowerMessage = errorMessage.toLowerCase();
 
-      if (lowerMessage.includes('mã học sinh')) {
+      const serverErrors = mapServerErrors(error.payload?.data?.errors);
+      if (Object.keys(serverErrors).length) {
+        setErrors(prev => ({ ...prev, ...serverErrors }));
+      } else if (lowerMessage.includes('mã học sinh')) {
         setErrors(prev => ({ ...prev, code: errorMessage }));
       } else if (lowerMessage.includes('email')) {
         setErrors(prev => ({ ...prev, email: errorMessage }));
@@ -476,7 +518,7 @@ const AddStudent = () => {
                   placeholder="Lớp học*"
                   value={formData.classId || undefined}
                   loading={classLoading}
-                  onChange={value => updateField('classId', value)}
+                  onChange={value => updateField('classId', Number(value))}
                 >
                   {classes.map(item => (
                     <Option key={item.id} value={item.id}>
@@ -496,10 +538,12 @@ const AddStudent = () => {
             </div>
 
             <label className={`add-student-field email-field ${errors.email ? 'has-error' : ''}`}>
-              <span>Email</span>
+              <span>
+                Email<em className="req-star"> *</em>
+              </span>
               <Input
                 value={formData.email}
-                placeholder="Email học sinh"
+                placeholder="Email học sinh *"
                 onChange={event => updateField('email', event.target.value)}
               />
               {errors.email && <div className="add-student-error">{errors.email}</div>}

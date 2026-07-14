@@ -26,6 +26,7 @@ const initialColumns = [
 ];
 
 const defaultVisibleColumnKeys = ['stt', 'code', 'name', 'description'];
+const lockedVisibleColumnKeys = ['stt', 'code', 'name'];
 
 const EMPTY_ADVANCED_SEARCH = {
   stt: '',
@@ -135,6 +136,10 @@ const Classrooms = () => {
   };
 
   const toggleColumn = columnKey => {
+    if (lockedVisibleColumnKeys.includes(columnKey)) {
+      return;
+    }
+
     setVisibleColumnKeys(prev => {
       if (prev.includes(columnKey)) {
         return prev.filter(key => key !== columnKey);
@@ -148,7 +153,11 @@ const Classrooms = () => {
   const runAction = async action => {
     setShowActionMenu(false);
 
-    if ((action === 'delete' || action === 'copy') && !selectedRowKeys.length) {
+    if (action === 'copy') {
+      return;
+    }
+
+    if (action === 'delete' && !selectedRowKeys.length) {
       message.warning('Bạn chưa chọn dữ liệu');
       return;
     }
@@ -157,14 +166,6 @@ const Classrooms = () => {
       if (action === 'delete') {
         const response = await ClassroomService.massDelete(selectedIds());
         message.success(response.message || 'Đã xóa dữ liệu đã chọn');
-        setSelectedRowKeys([]);
-        loadClassrooms();
-        return;
-      }
-
-      if (action === 'copy') {
-        const response = await ClassroomService.massCopy(selectedIds());
-        message.success(response.message || 'Đã sao chép dữ liệu đã chọn');
         setSelectedRowKeys([]);
         loadClassrooms();
         return;
@@ -192,15 +193,7 @@ const Classrooms = () => {
     }
   };
 
-  const handleCopyOne = async record => {
-    try {
-      const response = await ClassroomService.copy(record.id);
-      message.success(response.message || 'Sao chép thành công');
-      loadClassrooms();
-    } catch (error) {
-      message.error(error.message || 'Sao chép thất bại');
-    }
-  };
+  const handleCopyOne = () => {};
 
   const renderTextCell = (record, column, text) => {
     const cellKey = `${record.key}-${column.dataIndex}`;
@@ -330,8 +323,15 @@ const Classrooms = () => {
             {showColumnFilter && (
               <div className="student-column-filter-panel">
                 {columns.map(column => (
-                  <label key={column.key} className="student-column-filter-item">
-                    <Checkbox checked={visibleColumnKeys.includes(column.key)} onChange={() => toggleColumn(column.key)} />
+                  <label
+                    key={column.key}
+                    className={`student-column-filter-item ${lockedVisibleColumnKeys.includes(column.key) ? 'is-disabled' : ''}`}
+                  >
+                    <Checkbox
+                      checked={visibleColumnKeys.includes(column.key)}
+                      disabled={lockedVisibleColumnKeys.includes(column.key)}
+                      onChange={() => toggleColumn(column.key)}
+                    />
                     <span>{column.title}</span>
                   </label>
                 ))}

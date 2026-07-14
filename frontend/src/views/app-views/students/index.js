@@ -261,18 +261,6 @@ const Students = () => {
     }
 
     if (action === 'copy') {
-      if (!selectedRowKeys.length) {
-        message.warning('Bạn chưa chọn dữ liệu để sao chép');
-        return;
-      }
-      try {
-        const response = await StudentService.massCopy(selectedIds());
-        setSelectedRowKeys([]);
-        message.success(response.message || 'Đã sao chép dữ liệu đã chọn');
-        loadStudents();
-      } catch (error) {
-        message.error(error.message || 'Sao chép dữ liệu thất bại');
-      }
       return;
     }
 
@@ -311,23 +299,15 @@ const Students = () => {
     }
   };
 
-  const handleCopyOne = async record => {
-    try {
-      const response = await StudentService.copy(record.id);
-      message.success(response.message || 'Sao chép thành công');
-      loadStudents();
-    } catch (error) {
-      message.error(error.message || 'Sao chép thất bại');
-    }
-  };
+  const handleCopyOne = () => {};
 
   const ActionButtons = ({ record }) => (
     <div className="student-table-actions">
-      <Tooltip title="Xóa"><DeleteOutlined onClick={() => handleDeleteOne(record)} /></Tooltip>
-      <Tooltip title="Sửa"><EditOutlined /></Tooltip>
-      <Tooltip title="Nhân bản"><CopyOutlined onClick={() => handleCopyOne(record)} /></Tooltip>
-      <Tooltip title="Tải xuống"><DownloadOutlined /></Tooltip>
-      <Tooltip title="Xem"><EyeOutlined /></Tooltip>
+      <Tooltip title="Xóa"><DeleteOutlined style={{ color: '#ff1f3d' }} onClick={() => handleDeleteOne(record)} /></Tooltip>
+      <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853' }} /></Tooltip>
+      <Tooltip title="Nhân bản"><CopyOutlined style={{ color: '#5b6cff' }} onClick={() => handleCopyOne(record)} /></Tooltip>
+      <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} /></Tooltip>
+      <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844' }} /></Tooltip>
     </div>
   );
 

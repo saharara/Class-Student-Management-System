@@ -38,7 +38,7 @@ class TraStudent(models.Model):
         "tra_class",
         string="Lớp học",
         required=True,
-        ondelete="cascade",
+        ondelete="restrict",
     )
     username = fields.Char(string="Tài khoản", required=True, size=50)
     password = fields.Char(string="Mật khẩu", required=True, size=256)

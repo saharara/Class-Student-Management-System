@@ -118,12 +118,23 @@ class RestApiService:
         )
 
     def store(self):
+        payload = self.normalizer.payload()
+        field_errors = self._field_errors(payload)
+        if field_errors:
+            return self.serializer.error(
+                "E603",
+                "Vui lòng kiểm tra lại thông tin.",
+                {"errors": field_errors},
+            )
+
         try:
-            record = self.model.create(self.normalizer.writable_values(self.normalizer.payload()))
+            record = self.model.create(self.normalizer.writable_values(payload))
         except ValidationError as exc:
-            return self.serializer.error("E603", self._user_error_message(exc))
+            message = self._user_error_message(exc)
+            return self.serializer.error("E603", message, self._error_payload(message))
         except Exception as exc:
-            return self.serializer.error("E600", self._user_error_message(exc, action="create"))
+            message = self._user_error_message(exc, action="create")
+            return self.serializer.error("E600", message, self._error_payload(message))
         return self.serializer.success({"id": record.id}, "Thêm mới thành công.")
 
     def get_by_id(self, record_id):
@@ -286,6 +297,52 @@ class RestApiService:
             return self.serializer.error(result["error"][0], result["error"][1])
         return self.serializer.success(result["data"])
 
+    def _field_errors(self, payload):
+        if self.model_name != "tra_student":
+            return {}
+
+        source = payload.get("kw") if isinstance(payload.get("kw"), dict) else payload
+        labels = self.REQUIRED_FIELD_LABELS.get(self.model_name, {})
+        errors = {}
+
+        for field_name, label in labels.items():
+            value = source.get(field_name)
+            if value in (None, ""):
+                errors[field_name] = "%s là trường bắt buộc." % label
+
+        class_value = source.get("class_id")
+        if class_value not in (None, ""):
+            try:
+                self.normalizer.convert_writable_value("class_id", class_value)
+            except ValidationError:
+                errors["class_id"] = "Lớp học không tồn tại. Vui lòng chọn lớp hợp lệ."
+
+        return errors
+
+    def _error_payload(self, message):
+        field_name = self._field_name_from_message(message)
+        if not field_name:
+            return None
+        return {"errors": {field_name: message}}
+
+    def _field_name_from_message(self, message):
+        lower_message = (message or "").lower()
+        if "lớp" in lower_message or "class_id" in lower_message:
+            return "class_id"
+        if "mã học sinh" in lower_message or "code" in lower_message:
+            return "code"
+        if "email" in lower_message:
+            return "email"
+        if "tài khoản" in lower_message or "username" in lower_message:
+            return "username"
+        if "mật khẩu" in lower_message or "password" in lower_message:
+            return "password"
+        if "ngày sinh" in lower_message or "dob" in lower_message:
+            return "dob"
+        if "họ và tên" in lower_message or "fullname" in lower_message:
+            return "fullname"
+        return None
+
     def _user_error_message(self, exc, action=None):
         message = str(exc)
         lower_message = message.lower()
@@ -299,8 +356,8 @@ class RestApiService:
             return required_message
 
         if "foreign key constraint" in lower_message or "violates foreign key" in lower_message:
-            if self.model_name == "tra_student":
-                return "Lớp học không tồn tại hoặc dữ liệu liên kết không hợp lệ."
+            if self.model_name == "tra_student" and "tra_student_class_id_fkey" in message:
+                return "Lớp học không tồn tại. Vui lòng chọn lớp hợp lệ."
             return "Dữ liệu liên kết không hợp lệ."
 
         if "duplicate key value" in lower_message or "unique constraint" in lower_message:
