@@ -42,6 +42,7 @@ const mapClassroom = (record, index) => ({
   code: record.code || '',
   name: record.name || '',
   description: record.description || '',
+  studentCount: Number(record.student_count || 0),
 });
 
 const ResizableTitle = props => {
@@ -84,7 +85,7 @@ const Classrooms = () => {
       const response = await ClassroomService.getPage(1, {
         size: 100,
         search: search || undefined,
-        columnlist: JSON.stringify(['id', 'code', 'name', 'description']),
+        columnlist: JSON.stringify(['id', 'code', 'name', 'description', 'student_count']),
       });
       setClassrooms(unwrapRecords(response).map(mapClassroom));
     } catch (error) {
@@ -150,6 +151,18 @@ const Classrooms = () => {
 
   const selectedIds = () => selectedRowKeys.map(key => Number(key)).filter(Boolean);
 
+  const studentCountOf = record => Number(record.studentCount || record.student_count || 0);
+
+  const hasStudents = record => studentCountOf(record) > 0;
+
+  const classroomSummary = records => records
+    .map(record => `${record.code || record.name} (${studentCountOf(record)} học sinh)`)
+    .join(', ');
+
+  const warnCannotDeleteClassrooms = records => {
+    message.warning(`Không thể xóa lớp đang có học sinh: ${classroomSummary(records)}`);
+  };
+
   const runAction = async action => {
     setShowActionMenu(false);
 
@@ -162,27 +175,39 @@ const Classrooms = () => {
       return;
     }
 
-    try {
-      if (action === 'delete') {
+    if (action === 'delete') {
+      const selectedRecords = classrooms.filter(classroom => selectedRowKeys.includes(classroom.key));
+      const blockedRecords = selectedRecords.filter(hasStudents);
+      if (blockedRecords.length) {
+        warnCannotDeleteClassrooms(blockedRecords);
+        return;
+      }
+
+      try {
         const response = await ClassroomService.massDelete(selectedIds());
         message.success(response.message || 'Đã xóa dữ liệu đã chọn');
         setSelectedRowKeys([]);
         loadClassrooms();
-        return;
+      } catch (error) {
+        message.error(error.message || 'Thao tác thất bại');
       }
-
-      if (action === 'import') {
-        message.info('Chức năng nhập file lớp học sẽ được nối ở bước import');
-        return;
-      }
-
-      message.success('Đã xuất dữ liệu theo mẫu');
-    } catch (error) {
-      message.error(error.message || 'Thao tác thất bại');
+      return;
     }
+
+    if (action === 'import') {
+      message.info('Chức năng nhập file lớp học sẽ được nối ở bước import');
+      return;
+    }
+
+    message.success('Đã xuất dữ liệu theo mẫu');
   };
 
   const handleDeleteOne = async record => {
+    if (hasStudents(record)) {
+      warnCannotDeleteClassrooms([record]);
+      return;
+    }
+
     try {
       const response = await ClassroomService.remove(record.id);
       message.success(response.message || 'Xóa thành công');
@@ -215,15 +240,27 @@ const Classrooms = () => {
     history.push(`${APP_PREFIX_PATH}/classrooms/add`);
   };
 
-  const ActionButtons = ({ record }) => (
-    <div className="student-table-actions classroom-table-actions">
-      <Tooltip title="Xóa"><DeleteOutlined style={{ color: '#ff1f3d' }} onClick={() => handleDeleteOne(record)} /></Tooltip>
-      <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853' }} /></Tooltip>
-      <Tooltip title="Nhân bản"><CopyOutlined style={{ color: '#5b6cff' }} onClick={() => handleCopyOne(record)} /></Tooltip>
-      <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} /></Tooltip>
-      <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844' }} /></Tooltip>
-    </div>
-  );
+  const ActionButtons = ({ record }) => {
+    const deleteDisabled = hasStudents(record);
+
+    return (
+      <div className="student-table-actions classroom-table-actions">
+        <Tooltip title={deleteDisabled ? 'Không thể xóa lớp đang có học sinh' : 'Xóa'}>
+          <DeleteOutlined
+            style={{
+              color: deleteDisabled ? '#b8c0cc' : '#ff1f3d',
+              cursor: deleteDisabled ? 'not-allowed' : 'pointer',
+            }}
+            onClick={deleteDisabled ? undefined : () => handleDeleteOne(record)}
+          />
+        </Tooltip>
+        <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853' }} /></Tooltip>
+        <Tooltip title="Nhân bản"><CopyOutlined style={{ color: '#5b6cff' }} onClick={() => handleCopyOne(record)} /></Tooltip>
+        <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} /></Tooltip>
+        <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844' }} /></Tooltip>
+      </div>
+    );
+  };
 
   const renderedColumns = (() => {
     const visibleColumns = columns.filter(column => visibleColumnKeys.includes(column.key));
