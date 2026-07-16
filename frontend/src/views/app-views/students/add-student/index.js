@@ -12,20 +12,19 @@ import { APP_PREFIX_PATH } from 'configs/AppConfig';
 import ClassroomService from 'services/ClassroomService';
 import StudentService from 'services/StudentService';
 import { unwrapRecords } from 'services/OdooApiService';
+import { getHobbyMask, normalizeHobbyOptions } from 'constants/HobbyOptions';
+import {
+  getFieldError,
+  getPasswordChecks,
+  getPhotoError,
+  VALIDATED_FIELDS,
+} from './validationRules';
 
 import './addStudent.css';
 
 const { TextArea } = Input;
 const { Option } = Select;
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = ['jpg', 'jpeg', 'png'];
-const EMAIL_PATTERN = /^[0-9a-zA-Z.\-_]+@[0-9a-zA-Z.\-_]+$/;
-const FACEBOOK_PATTERN = /^https?:\/\/[0-9a-zA-Z.\-_]+$/;
-const PASSWORD_PATTERN = /^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[^A-Za-z0-9\s]).{8,}$/;
-const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
-
-const EXISTING_STUDENTS = [];
 
 const EMPTY_FORM = {
   code: '',
@@ -43,15 +42,6 @@ const EMPTY_FORM = {
   description: '',
 };
 
-const HOBBY_BITS = {
-  sport: 1,
-  book: 2,
-  music: 4,
-  paint: 8,
-  travel: 16,
-  code: 32,
-};
-
 const DEFAULT_HAIR_COLOR = { value: 'black', label: 'Đen', color: '#111111' };
 
 const HAIR_COLOR_OPTIONS = [
@@ -63,90 +53,6 @@ const HAIR_COLOR_OPTIONS = [
   { value: 'red', label: 'Đỏ', color: '#d93025' },
   { value: 'gray', label: 'Xám', color: '#8c8c8c' },
   { value: 'white', label: 'Trắng', color: '#f5f5f5' },
-];
-
-const hasDuplicate = (field, value) => {
-  const normalizedValue = value.trim().toLowerCase();
-  return EXISTING_STUDENTS.some(
-    student => student[field].toLowerCase() === normalizedValue
-  );
-};
-
-const getPasswordChecks = password => [
-  { key: 'length', label: 'Tối thiểu 8 ký tự', passed: password.length >= 8 },
-  { key: 'upper', label: 'Có chữ hoa', passed: /[A-Z]/.test(password) },
-  { key: 'lower', label: 'Có chữ thường', passed: /[a-z]/.test(password) },
-  { key: 'number', label: 'Có số', passed: /[0-9]/.test(password) },
-  { key: 'special', label: 'Có ký tự đặc biệt', passed: /[^A-Za-z0-9\s]/.test(password) },
-];
-
-const getFieldError = (field, data, color) => {
-  const value = typeof data[field] === 'string' ? data[field].trim() : data[field];
-
-  switch (field) {
-    case 'code':
-      if (!value) return 'Mã học sinh là bắt buộc';
-      if (value.length > 50) return 'Mã học sinh tối đa 50 ký tự';
-      if (hasDuplicate('code', value)) return 'Mã học sinh đã tồn tại';
-      return undefined;
-    case 'fullname':
-      if (!value) return 'Họ và tên học sinh là bắt buộc';
-      if (value.length > 30) return 'Họ và tên học sinh tối đa 30 ký tự';
-      return undefined;
-    case 'dob':
-      if (!value) return 'Ngày sinh là bắt buộc';
-      if (new Date(value) >= new Date()) return 'Ngày sinh phải trước thời điểm hiện tại';
-      return undefined;
-    case 'classId':
-      if (!value) return 'Lớp học là bắt buộc';
-      return undefined;
-    case 'email':
-      if (!value) return 'Email học sinh là bắt buộc';
-      if (value.length > 256) return 'Email học sinh tối đa 256 ký tự';
-      if (!EMAIL_PATTERN.test(value)) return 'Sai định dạng email';
-      if (hasDuplicate('email', value)) return 'Địa chỉ email đã tồn tại';
-      return undefined;
-    case 'facebook':
-      if (value.length > 256) return 'Facebook học sinh tối đa 256 ký tự';
-      if (value && !FACEBOOK_PATTERN.test(value)) return 'Facebook học sinh không đúng định dạng';
-      return undefined;
-    case 'username':
-      if (!value) return 'Tài khoản học sinh là bắt buộc';
-      if (value.length > 50) return 'Tài khoản tối đa 50 ký tự';
-      if (hasDuplicate('username', value)) return 'Địa chỉ tài khoản đã tồn tại';
-      return undefined;
-    case 'password':
-      if (!data.password) return 'Mật khẩu là bắt buộc';
-      if (data.password.length < 8) return 'Mật khẩu tối thiểu 8 ký tự';
-      if (data.password.length > 256) return 'Mật khẩu tối đa 256 ký tự';
-      if (!PASSWORD_PATTERN.test(data.password)) return 'Mật khẩu không đúng định dạng';
-      return undefined;
-    case 'hometown':
-      if (value.length > 100) return 'Địa chỉ không vượt quá 100 ký tự';
-      return undefined;
-    case 'address':
-      if (value.length > 100) return 'Địa chỉ không vượt quá 100 ký tự';
-      return undefined;
-    case 'hairColor':
-      if (color?.color && !HEX_COLOR_PATTERN.test(color.color)) return 'Mã màu không hợp lệ';
-      return undefined;
-    default:
-      return undefined;
-  }
-};
-
-const VALIDATED_FIELDS = [
-  'code',
-  'fullname',
-  'dob',
-  'classId',
-  'email',
-  'facebook',
-  'username',
-  'password',
-  'hometown',
-  'address',
-  'hairColor',
 ];
 
 const SERVER_FIELD_MAP = {
@@ -175,6 +81,10 @@ const mapServerErrors = serverErrors => {
     return mapped;
   }, {});
 };
+
+const getErrorSummary = fieldErrors => Object.values(fieldErrors)
+  .filter(Boolean)
+  .join(' | ');
 const AddStudent = () => {
   const history = useHistory();
   const fileInputRef = useRef(null);
@@ -189,6 +99,9 @@ const AddStudent = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [classes, setClasses] = useState([]);
   const [classLoading, setClassLoading] = useState(false);
+  const [hobbyOptions, setHobbyOptions] = useState([]);
+  const [hobbyLoading, setHobbyLoading] = useState(false);
+  const [existingStudents, setExistingStudents] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
   const currentHairColor = hairColor?.color || '#111111';
@@ -212,16 +125,56 @@ const AddStudent = () => {
     }
   };
 
+  const loadHobbies = async () => {
+    setHobbyLoading(true);
+    try {
+      const response = await StudentService.getHobbies();
+      setHobbyOptions(normalizeHobbyOptions(unwrapRecords(response)));
+    } catch (error) {
+      message.error(error.message || 'Không tải được danh sách sở thích');
+    } finally {
+      setHobbyLoading(false);
+    }
+  };
+
+  const loadExistingStudents = async () => {
+    try {
+      const response = await StudentService.getAll({
+        columnlist: JSON.stringify(['id', 'code', 'email', 'username']),
+      });
+      setExistingStudents(unwrapRecords(response));
+    } catch (error) {
+      message.error(error.message || 'Không tải được dữ liệu kiểm tra trùng học sinh');
+    }
+  };
+
   useEffect(() => {
     loadClasses();
+    loadHobbies();
+    loadExistingStudents();
   }, []);
 
+  useEffect(() => {
+    if (!existingStudents.length) {
+      return;
+    }
+
+    setErrors(prevErrors => {
+      const nextErrors = { ...prevErrors };
+      ['code', 'email', 'username'].forEach(field => {
+        if (formData[field]) {
+          nextErrors[field] = getFieldError(field, formData, hairColor, existingStudents);
+        }
+      });
+      return nextErrors;
+    });
+  }, [existingStudents, formData, hairColor]);
   const updateField = (field, value) => {
     setFormData(prev => {
       const nextData = { ...prev, [field]: value };
       setErrors(prevErrors => ({
         ...prevErrors,
-        [field]: getFieldError(field, nextData, hairColor),
+        [field]: getFieldError(field, nextData, hairColor, existingStudents),
       }));
       return nextData;
     });
@@ -231,14 +184,14 @@ const AddStudent = () => {
     const nextErrors = {};
 
     VALIDATED_FIELDS.forEach(field => {
-      const fieldError = getFieldError(field, formData, hairColor);
+      const fieldError = getFieldError(field, formData, hairColor, existingStudents);
       if (fieldError) {
         nextErrors[field] = fieldError;
       }
     });
 
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    return nextErrors;
   };
 
   const resetForm = () => {
@@ -263,7 +216,7 @@ const AddStudent = () => {
       password: formData.password,
       homecity: formData.hometown.trim(),
       address: formData.address.trim(),
-      hobbies: formData.hobbies.reduce((total, hobby) => total + (HOBBY_BITS[hobby] || 0), 0),
+      hobbies: getHobbyMask(formData.hobbies, hobbyOptions),
       hair_color: hairColor?.color || DEFAULT_HAIR_COLOR.color,
       description: formData.description.trim(),
     };
@@ -277,8 +230,9 @@ const AddStudent = () => {
   };
 
   const submitForm = async ({ stayOnPage = false } = {}) => {
-    if (!validateForm()) {
-      message.error('Thêm mới học sinh thất bại');
+    const clientErrors = validateForm();
+    if (Object.keys(clientErrors).length) {
+      message.error(getErrorSummary(clientErrors) || 'Thêm mới học sinh thất bại');
       return;
     }
 
@@ -294,6 +248,15 @@ const AddStudent = () => {
       const response = await StudentService.create(buildPayload(selectedClass));
       message.success(response.message || 'Thêm mới thành công');
 
+      setExistingStudents(prev => ([
+        ...prev,
+        {
+          code: formData.code.trim(),
+          email: formData.email.trim(),
+          username: formData.username.trim(),
+        },
+      ]));
+
       if (stayOnPage) {
         resetForm();
         return;
@@ -304,20 +267,27 @@ const AddStudent = () => {
       const errorMessage = error.message || 'Thêm mới học sinh thất bại';
       const lowerMessage = errorMessage.toLowerCase();
 
-      const serverErrors = mapServerErrors(error.payload?.data?.errors);
+      const serverErrors = mapServerErrors(error.payload?.data?.errors || error.payload?.errors);
       if (Object.keys(serverErrors).length) {
         setErrors(prev => ({ ...prev, ...serverErrors }));
-      } else if (lowerMessage.includes('mã học sinh')) {
-        setErrors(prev => ({ ...prev, code: errorMessage }));
-      } else if (lowerMessage.includes('email')) {
-        setErrors(prev => ({ ...prev, email: errorMessage }));
-      } else if (lowerMessage.includes('tài khoản')) {
-        setErrors(prev => ({ ...prev, username: errorMessage }));
-      } else if (lowerMessage.includes('lớp')) {
-        setErrors(prev => ({ ...prev, classId: errorMessage }));
-      }
+        message.error(getErrorSummary(serverErrors) || errorMessage);
+      } else {
+        const nextErrors = {};
+        if (lowerMessage.includes('mã học sinh')) {
+          nextErrors.code = errorMessage;
+        } else if (lowerMessage.includes('email')) {
+          nextErrors.email = errorMessage;
+        } else if (lowerMessage.includes('tài khoản')) {
+          nextErrors.username = errorMessage;
+        } else if (lowerMessage.includes('lớp')) {
+          nextErrors.classId = errorMessage;
+        }
 
-      message.error(errorMessage);
+        if (Object.keys(nextErrors).length) {
+          setErrors(prev => ({ ...prev, ...nextErrors }));
+        }
+        message.error(errorMessage);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -330,15 +300,9 @@ const AddStudent = () => {
     if (!file) {
       return;
     }
-
-    const extension = file.name.split('.').pop().toLowerCase();
-    if (!ALLOWED_IMAGE_TYPES.includes(extension)) {
-      message.error('Không đúng định dạng ảnh jpg, jpeg, png');
-      return;
-    }
-
-    if (file.size > MAX_IMAGE_SIZE) {
-      message.error('File ảnh không được lớn hơn 5MB');
+    const photoError = getPhotoError(file);
+    if (photoError) {
+      message.error(photoError);
       return;
     }
 
@@ -406,7 +370,7 @@ const AddStudent = () => {
     <div className="add-student-page">
       <button
         type="button"
-        className="add-student-back-btn"
+        className="add-student-back-btn app-back-arrow-btn"
         onClick={() => history.push(`${APP_PREFIX_PATH}/students`)}
         aria-label="Quay lại"
       >
@@ -560,10 +524,12 @@ const AddStudent = () => {
             </label>
 
             <label className={`add-student-field account-field ${errors.username ? 'has-error' : ''}`}>
-              <span>Tài khoản</span>
+              <span>
+                Tài khoản<em className="req-star"> *</em>
+              </span>
               <Input
                 value={formData.username}
-                placeholder="Tài khoản"
+                placeholder="Tài khoản *"
                 onChange={event => updateField('username', event.target.value)}
               />
               {errors.username && <div className="add-student-error">{errors.username}</div>}
@@ -636,14 +602,14 @@ const AddStudent = () => {
                 placeholder="Sở thích"
                 mode="multiple"
                 value={formData.hobbies}
+                loading={hobbyLoading}
                 onChange={value => updateField('hobbies', value)}
               >
-                <Option value="sport">Chơi thể thao</Option>
-                <Option value="book">Đọc sách</Option>
-                <Option value="music">Âm nhạc</Option>
-                <Option value="paint">Vẽ tranh</Option>
-                <Option value="travel">Du lịch</Option>
-                <Option value="code">Lập trình</Option>
+                {hobbyOptions.map(item => (
+                  <Option key={item.code} value={item.code}>
+                    {item.label}
+                  </Option>
+                ))}
               </Select>
             </label>
 

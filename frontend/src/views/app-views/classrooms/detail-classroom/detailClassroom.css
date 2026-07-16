@@ -1,0 +1,463 @@
+.detail-classroom-page {
+  position: relative;
+  min-height: calc(100vh - 70px);
+  padding: 32px 34px 58px 34px;
+  background: #ffffff;
+  color: #111827;
+  font-family: Arial, 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+}
+
+.detail-classroom-back-btn {
+  width: 46px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #12377f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  cursor: pointer;
+}
+
+.detail-classroom-back-btn:hover,
+.detail-classroom-back-btn:focus {
+  color: #0b2d72;
+  outline: none;
+}
+
+.detail-classroom-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 10px 0 28px;
+}
+
+.detail-classroom-heading h1,
+.detail-classroom-student-section h2 {
+  margin: 0;
+  color: #111111;
+  font-size: 27px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.detail-classroom-actions,
+.detail-classroom-table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 17px;
+}
+
+.detail-classroom-actions .anticon,
+.detail-classroom-table-actions .anticon {
+  cursor: pointer;
+}
+
+.detail-classroom-actions .danger,
+.detail-classroom-table-actions .danger {
+  color: #ff1f3d;
+}
+
+.detail-classroom-actions .success,
+.detail-classroom-table-actions .success {
+  color: #00c853;
+}
+
+.detail-classroom-actions .primary,
+.detail-classroom-table-actions .primary {
+  color: #5b6cff;
+}
+
+.detail-classroom-actions .muted,
+.detail-classroom-table-actions .muted {
+  color: #8d98a8;
+}
+
+.detail-classroom-actions .dark,
+.detail-classroom-table-actions .dark {
+  color: #0f2844;
+}
+
+.detail-classroom-info {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(0, 1fr);
+  border: 1px solid #b6bcc6;
+  margin-bottom: 30px;
+}
+
+.detail-classroom-info-label,
+.detail-classroom-info-value {
+  min-height: 46px;
+  padding: 13px 14px;
+  border-right: 1px solid #b6bcc6;
+  border-bottom: 1px solid #b6bcc6;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+}
+
+.detail-classroom-info-label {
+  background: #f4f7fa;
+}
+
+.detail-classroom-info-value {
+  border-right: 0;
+  background: #ffffff;
+}
+
+.detail-classroom-info-label:nth-last-child(2),
+.detail-classroom-info-value:last-child {
+  border-bottom: 0;
+}
+
+.detail-classroom-description-label,
+.detail-classroom-description-value {
+  min-height: 132px;
+  display: flex;
+  align-items: center;
+}
+
+.detail-classroom-description-value {
+  align-items: flex-start;
+  white-space: pre-wrap;
+}
+
+.detail-classroom-student-section h2 {
+  margin-bottom: 24px;
+}
+
+.detail-classroom-student-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.detail-classroom-toolbar-right {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.detail-classroom-students-table .ant-table {
+  color: #111827;
+}
+
+.detail-classroom-students-table .ant-table-thead > tr > th {
+  background: #f3f6f9;
+  color: #111827;
+  font-weight: 700;
+  text-align: center;
+}
+
+.detail-classroom-students-table .ant-table-tbody > tr > td {
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.detail-classroom-ellipsis {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-classroom-color {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.detail-classroom-color-dot {
+  width: 15px;
+  height: 15px;
+  border: 1px solid #c5cbd3;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  .detail-classroom-page {
+    padding: 24px 18px 48px;
+  }
+
+  .detail-classroom-heading,
+  .detail-classroom-student-toolbar,
+  .detail-classroom-toolbar-right {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .detail-classroom-info {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-classroom-info-label,
+  .detail-classroom-info-value {
+    border-right: 0;
+  }
+
+  .detail-classroom-info-label:nth-last-child(2) {
+    border-bottom: 1px solid #b6bcc6;
+  }
+
+  .detail-classroom-page .student-search-wrap {
+    min-width: 0;
+    width: 100%;
+  }
+}
+/* ================= UNIFIED BACK ARROW ================= */
+.app-back-arrow-btn {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #143c91 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 31px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+
+.app-back-arrow-btn:hover,
+.app-back-arrow-btn:focus {
+  color: #0b2d72 !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.app-back-arrow-btn .anticon {
+  display: block;
+}
+/* ================= STUDENT LIST DETAIL MATCH SAMPLE ================= */
+.detail-classroom-student-section {
+  margin-top: 8px;
+}
+
+.detail-classroom-student-section h2 {
+  margin-bottom: 38px;
+  color: #000000;
+  font-family: 'Times New Roman', serif;
+  font-size: 31px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.detail-classroom-student-toolbar {
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.detail-classroom-student-toolbar > .ant-btn-dangerous {
+  height: 44px;
+  padding: 0 10px;
+  border: 2px solid #ff4d6a !important;
+  border-radius: 0;
+  background: #ffffff !important;
+  color: #ff2c4f !important;
+  font-family: 'Times New Roman', serif;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: none !important;
+}
+
+.detail-classroom-page .detail-classroom-toolbar-right {
+  align-items: flex-start;
+  margin-left: auto;
+  gap: 16px;
+}
+
+.detail-classroom-page .student-search-wrap {
+  width: 260px;
+}
+
+.detail-classroom-page .student-search-wrap .ant-input-affix-wrapper {
+  height: 42px;
+  border-color: #143c91;
+}
+
+.detail-classroom-page .student-primary-btn {
+  height: 42px;
+  min-width: 126px;
+  padding: 0 14px;
+  border-radius: 6px;
+  background: #12377f !important;
+  border-color: #12377f !important;
+  font-family: 'Times New Roman', serif;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .18);
+}
+
+.detail-classroom-students-table .ant-table {
+  font-family: 'Times New Roman', serif;
+  color: #111111;
+}
+
+.detail-classroom-students-table .ant-table-thead > tr > th,
+.detail-classroom-students-table .ant-table-tbody > tr > td {
+  padding: 7px 8px;
+  border-color: #b9bec7;
+  font-family: 'Times New Roman', serif;
+  font-size: 14px;
+  line-height: 17px;
+  font-weight: 700;
+}
+
+.detail-classroom-students-table .ant-table-thead > tr > th {
+  background: #f4f7fa;
+}
+
+.detail-classroom-students-table .ant-checkbox-inner {
+  width: 24px;
+  height: 24px;
+  border-color: #111111 !important;
+  background: #111111;
+}
+
+.detail-classroom-students-table .ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: #ffffff;
+}
+
+.detail-classroom-students-table .ant-avatar {
+  width: 38px;
+  height: 38px;
+}
+
+.detail-classroom-table-actions {
+  gap: 8px;
+  font-size: 18px;
+}
+/* ================= CLEAN STUDENT TOOLBAR ================= */
+.detail-classroom-page .detail-classroom-student-toolbar {
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 36px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.detail-classroom-page .detail-classroom-toolbar-right {
+  margin-left: 0 !important;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.detail-classroom-page .student-search-wrap {
+  position: relative;
+  width: 292px;
+}
+
+.detail-classroom-page .student-search-label {
+  position: absolute;
+  top: -8px;
+  left: 14px;
+  z-index: 5;
+  padding: 0 6px;
+  background: #ffffff;
+  color: #143c91;
+  font-family: Arial, 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.detail-classroom-page .student-search-wrap .ant-input-affix-wrapper {
+  height: 42px;
+  border: 2px solid #143c91;
+  border-radius: 8px;
+  box-shadow: none !important;
+}
+
+.detail-classroom-page .student-search-wrap .ant-input-affix-wrapper:hover,
+.detail-classroom-page .student-search-wrap .ant-input-affix-wrapper-focused {
+  border-color: #143c91;
+  box-shadow: none !important;
+}
+
+.detail-classroom-page .student-search-wrap .ant-input-prefix {
+  color: #667085;
+  margin-right: 8px;
+}
+
+.detail-classroom-page .student-search-wrap .ant-input::placeholder {
+  color: #a7b0bf;
+  font-weight: 500;
+}
+
+.detail-classroom-page .detail-classroom-student-toolbar > .ant-btn-dangerous {
+  min-width: 200px;
+  height: 48px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-classroom-page .student-primary-btn {
+  height: 48px;
+  min-width: 148px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+/* ================= MATCH LIST CHECKBOX STYLE ================= */
+.detail-classroom-students-table .ant-table-selection-column {
+  width: 46px;
+  min-width: 46px;
+  padding: 0 !important;
+  text-align: center;
+}
+
+.detail-classroom-students-table .ant-checkbox-inner {
+  width: 22px !important;
+  height: 22px !important;
+  border: 2px solid #111111 !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+}
+
+.detail-classroom-students-table .ant-checkbox-checked .ant-checkbox-inner {
+  background: #000000 !important;
+  border-color: #000000 !important;
+}
+
+.detail-classroom-students-table .ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: #ffffff !important;
+}
+
+.detail-classroom-students-table .ant-checkbox-indeterminate .ant-checkbox-inner {
+  background: #ffffff !important;
+  border-color: #111111 !important;
+}
+
+.detail-classroom-students-table .ant-checkbox-indeterminate .ant-checkbox-inner::after {
+  background: #000000 !important;
+}
+/* ================= DISABLED CLASS DELETE ACTION ================= */
+.detail-classroom-actions .is-disabled {
+  color: #b8c0cc !important;
+  cursor: not-allowed !important;
+}
+/* ================= RIGHT ALIGN STUDENT SEARCH ACTIONS ================= */
+.detail-classroom-page .detail-classroom-student-toolbar {
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.detail-classroom-page .detail-classroom-toolbar-right {
+  margin-left: auto !important;
+  justify-content: flex-end;
+}

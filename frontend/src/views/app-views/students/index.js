@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Avatar, Button, Card, Checkbox, Input, message, Table, Tooltip } from 'antd';
+import { Avatar, Button, Card, Checkbox, Input, message, Pagination, Table, Tooltip } from 'antd';
 import {
   CaretDownOutlined,
   CaretUpOutlined,
@@ -15,21 +15,13 @@ import {
 import { Resizable } from 'react-resizable';
 import { useHistory } from 'react-router-dom';
 import { APP_PREFIX_PATH } from 'configs/AppConfig';
+import ClassroomService from 'services/ClassroomService';
 import StudentService from 'services/StudentService';
 import { unwrapRecords } from 'services/OdooApiService';
+import { getHobbyLabels, normalizeHobbyOptions } from 'constants/HobbyOptions';
+import { getPinnedTablePage } from 'utils/pinnedTableSelection';
+import confirmDelete from 'utils/confirmDelete';
 
-const HOBBY_OPTIONS = [
-  { bit: 1, label: 'Chơi thể thao' },
-  { bit: 2, label: 'Đọc sách' },
-  { bit: 4, label: 'Âm nhạc' },
-  { bit: 8, label: 'Vẽ tranh' },
-  { bit: 16, label: 'Du lịch' },
-  { bit: 32, label: 'Lập trình' },
-];
-
-const getHobbyLabels = mask => HOBBY_OPTIONS
-  .filter(item => (mask & item.bit) === item.bit)
-  .map(item => item.label);
 
 const initialColumns = [
   { title: 'Mã học sinh', shortTitle: 'Mã', dataIndex: 'code', key: 'code', width: 120 },
@@ -44,7 +36,7 @@ const initialColumns = [
   { title: 'Màu tóc', dataIndex: 'hairColor', key: 'hairColor', width: 116, type: 'color' },
   { title: 'Email', dataIndex: 'email', key: 'email', width: 165 },
   { title: 'Facebook', dataIndex: 'facebook', key: 'facebook', width: 160 },
-  { title: 'Số điện thoại', dataIndex: 'phone', key: 'phone', width: 130 },
+  { title: 'Lớp học', dataIndex: 'className', key: 'className', width: 150 },
   { title: 'Tài khoản', dataIndex: 'username', key: 'username', width: 128 },
   { title: 'Mật khẩu', dataIndex: 'password', key: 'password', width: 120 },
   { title: 'Mô tả', dataIndex: 'description', key: 'description', width: 180 },
@@ -62,20 +54,39 @@ const defaultVisibleColumnKeys = [
   'hobbyMask',
   'hairColor',
   'email',
+  'className',
 ];
 
-const mapStudent = (record, index) => {
+const lockedVisibleColumnKeys = ['stt', 'code', 'name'];
+
+const getClassLabel = classRecord => {
+  if (!classRecord) {
+    return '';
+  }
+
+  if (classRecord.code && classRecord.name) {
+    return `${classRecord.code} - ${classRecord.name}`;
+  }
+
+  return classRecord.code || classRecord.name || '';
+};
+
+const mapStudent = (record, index, classesById = {}) => {
   const attachment = record.attachment ? 'data:image/png;base64,' + record.attachment : '';
   const hairColor = record.hair_color || '';
+  const classId = Number(record.class_id || 0);
+  const classRecord = classesById[classId];
+  const className = getClassLabel(classRecord) || (record.class_id ? String(record.class_id) : '');
 
   return {
     key: String(record.id),
     id: record.id,
     code: record.code || '',
-    classCode: record.class_id ? String(record.class_id) : '',
+    classCode: classRecord?.code || className,
+    className,
     name: record.fullname || '',
     avatar: attachment,
-    stt: String(record.id || index + 1).padStart(5, '0'),
+    stt: String(index + 1),
     birthday: record.dob || '',
     gender: record.sex ? 'Nam' : 'Nữ',
     hometown: record.homecity || '',
@@ -84,7 +95,6 @@ const mapStudent = (record, index) => {
     hairColor: { name: hairColor, value: hairColor || 'transparent' },
     email: record.email || '',
     facebook: record.facebook || '',
-    phone: '',
     username: record.username || '',
     password: record.password ? '******' : '',
     description: record.description || '',
@@ -110,13 +120,13 @@ const ResizableTitle = props => {
   );
 };
 
-const getColumnSortValue = (record, column) => {
+const getColumnSortValue = (record, column, hobbyOptions = []) => {
   if (column.type === 'index') {
     return Number(record.key);
   }
 
   if (column.type === 'hobbies') {
-    return getHobbyLabels(record[column.dataIndex]).join(', ');
+    return getHobbyLabels(record[column.dataIndex], hobbyOptions).join(', ');
   }
 
   if (column.type === 'color') {
@@ -154,34 +164,53 @@ const Students = () => {
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [quickSearch, setQuickSearch] = useState('');
   const [advancedSearch, setAdvancedSearch] = useState(EMPTY_ADVANCED_SEARCH);
+  const [hobbyOptions, setHobbyOptions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [tablePage, setTablePage] = useState(1);
+  const [tablePageSize, setTablePageSize] = useState(10);
 
   const loadStudents = async (search = quickSearch) => {
     setLoading(true);
     try {
-      const response = await StudentService.getPage(1, {
-        size: 100,
-        search: search || undefined,
-        columnlist: JSON.stringify([
-          'id',
-          'code',
-          'fullname',
-          'dob',
-          'sex',
-          'homecity',
-          'address',
-          'hobbies',
-          'hair_color',
-          'email',
-          'facebook',
-          'class_id',
-          'username',
-          'password',
-          'description',
-          'attachment',
-        ]),
-      });
-      setStudents(unwrapRecords(response).map(mapStudent));
+      const [studentResponse, classResponse, hobbyResponse] = await Promise.all([
+        StudentService.getPage(1, {
+          size: 100,
+          search: search || undefined,
+          columnlist: JSON.stringify([
+            'id',
+            'code',
+            'fullname',
+            'dob',
+            'sex',
+            'homecity',
+            'address',
+            'hobbies',
+            'hair_color',
+            'email',
+            'facebook',
+            'class_id',
+            'username',
+            'password',
+            'description',
+            'attachment',
+          ]),
+        }),
+        ClassroomService.getAll({
+          columnlist: JSON.stringify(['id', 'code', 'name']),
+        }),
+        StudentService.getHobbies(),
+      ]);
+      const nextHobbyOptions = normalizeHobbyOptions(unwrapRecords(hobbyResponse));
+      setHobbyOptions(nextHobbyOptions);
+      const classesById = unwrapRecords(classResponse).reduce((mapped, item) => {
+        const id = Number(item.id);
+        if (Number.isInteger(id) && id > 0) {
+          mapped[id] = item;
+        }
+        return mapped;
+      }, {});
+      setStudents(unwrapRecords(studentResponse).map((record, index) => mapStudent(record, index, classesById)));
+      setTablePage(1);
     } catch (error) {
       message.error(error.message || 'Không tải được dữ liệu học sinh');
     } finally {
@@ -231,6 +260,10 @@ const Students = () => {
   };
 
   const toggleColumn = columnKey => {
+    if (lockedVisibleColumnKeys.includes(columnKey)) {
+      return;
+    }
+
     setVisibleColumnKeys(prev => {
       if (prev.includes(columnKey)) {
         return prev.filter(key => key !== columnKey);
@@ -249,18 +282,36 @@ const Students = () => {
         message.warning('Bạn chưa chọn dữ liệu để xóa');
         return;
       }
-      try {
-        const response = await StudentService.massDelete(selectedIds());
-        setSelectedRowKeys([]);
-        message.success(response.message || 'Đã xóa dữ liệu đã chọn');
-        loadStudents();
-      } catch (error) {
-        message.error(error.message || 'Xóa dữ liệu thất bại');
-      }
+
+      confirmDelete({
+        content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} học sinh đã chọn không?`,
+        onOk: async () => {
+          try {
+            const response = await StudentService.massDelete(selectedIds());
+            setSelectedRowKeys([]);
+            message.success(response.message || 'Đã xóa dữ liệu đã chọn');
+            loadStudents();
+          } catch (error) {
+            message.error(error.message || 'Xóa dữ liệu thất bại');
+          }
+        },
+      });
       return;
     }
-
     if (action === 'copy') {
+      if (!selectedRowKeys.length) {
+        message.warning('Bạn chưa chọn dữ liệu để sao chép');
+        return;
+      }
+
+      try {
+        const response = await StudentService.massCopy(selectedIds());
+        setSelectedRowKeys([]);
+        message.success(response.message || 'Sao chép dữ liệu đã chọn thành công');
+        loadStudents();
+      } catch (error) {
+        message.error(error.message || 'Sao chép dữ liệu thất bại');
+      }
       return;
     }
 
@@ -288,18 +339,35 @@ const Students = () => {
     );
   };
 
-  const handleDeleteOne = async record => {
+  const handleDeleteOne = record => {
+    confirmDelete({
+      content: `Bạn có chắc chắn muốn xóa học sinh ${record.code || record.name || ''} không?`,
+      onOk: async () => {
+        try {
+          const response = await StudentService.remove(record.id);
+          message.success(response.message || 'Xóa thành công');
+          setSelectedRowKeys(prev => prev.filter(key => key !== record.key));
+          loadStudents();
+        } catch (error) {
+          message.error(error.message || 'Xóa thất bại');
+        }
+      },
+    });
+  };
+
+  const handleCopyOne = async record => {
     try {
-      const response = await StudentService.remove(record.id);
-      message.success(response.message || 'Xóa thành công');
-      setSelectedRowKeys(prev => prev.filter(key => key !== record.key));
+      const response = await StudentService.copy(record.id);
+      message.success(response.message || 'Sao chép thành công');
       loadStudents();
     } catch (error) {
-      message.error(error.message || 'Xóa thất bại');
+      message.error(error.message || 'Sao chép thất bại');
     }
   };
 
-  const handleCopyOne = () => {};
+  const handleViewDetail = record => {
+    history.push(APP_PREFIX_PATH + '/students/' + record.id);
+  };
 
   const ActionButtons = ({ record }) => (
     <div className="student-table-actions">
@@ -307,7 +375,7 @@ const Students = () => {
       <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853' }} /></Tooltip>
       <Tooltip title="Nhân bản"><CopyOutlined style={{ color: '#5b6cff' }} onClick={() => handleCopyOne(record)} /></Tooltip>
       <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} /></Tooltip>
-      <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844' }} /></Tooltip>
+      <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844', cursor: 'pointer' }} onClick={() => handleViewDetail(record)} /></Tooltip>
     </div>
   );
 
@@ -316,7 +384,7 @@ const Students = () => {
     const contentColumns = visibleColumns.map(column => ({
       ...column,
       title: column.shortTitle || column.title,
-      sorter: (a, b) => String(getColumnSortValue(a, column)).localeCompare(String(getColumnSortValue(b, column)), 'vi'),
+      sorter: (a, b) => String(getColumnSortValue(a, column, hobbyOptions)).localeCompare(String(getColumnSortValue(b, column, hobbyOptions)), 'vi'),
       render: (value, record, index) => {
         if (column.type === 'index') {
           return <span className="student-index-cell">{index + 1}</span>;
@@ -327,7 +395,7 @@ const Students = () => {
         }
 
         if (column.type === 'hobbies') {
-          return renderTextCell(record, column, getHobbyLabels(value).join(', '));
+          return renderTextCell(record, column, getHobbyLabels(value, hobbyOptions).join(', '));
         }
 
         if (column.type === 'color') {
@@ -368,7 +436,7 @@ const Students = () => {
 
   const filteredStudents = students.filter(student => {
     const keyword = quickSearch.trim().toLowerCase();
-    const hobbies = getHobbyLabels(student.hobbyMask).join(', ').toLowerCase();
+    const hobbies = getHobbyLabels(student.hobbyMask, hobbyOptions).join(', ').toLowerCase();
     const allText = [
       student.code,
       student.name,
@@ -380,7 +448,7 @@ const Students = () => {
       student.hairColor.name,
       student.email,
       student.facebook,
-      student.phone,
+      student.className,
       student.username,
       student.description,
     ].join(' ').toLowerCase();
@@ -391,7 +459,7 @@ const Students = () => {
       (!advancedSearch.name || student.name.toLowerCase().includes(advancedSearch.name.toLowerCase())) &&
       (!advancedSearch.birthday || student.birthday.includes(advancedSearch.birthday)) &&
       (!advancedSearch.gender || student.gender === advancedSearch.gender) &&
-      (!advancedSearch.classCode || student.classCode.toLowerCase().includes(advancedSearch.classCode.toLowerCase())) &&
+      (!advancedSearch.classCode || [student.classCode, student.className].join(' ').toLowerCase().includes(advancedSearch.classCode.toLowerCase())) &&
       (!advancedSearch.email || student.email.toLowerCase().includes(advancedSearch.email.toLowerCase())) &&
       (!advancedSearch.facebook || student.facebook.toLowerCase().includes(advancedSearch.facebook.toLowerCase())) &&
       (!advancedSearch.hometown || student.hometown.toLowerCase().includes(advancedSearch.hometown.toLowerCase())) &&
@@ -401,6 +469,13 @@ const Students = () => {
       (!advancedSearch.description || student.description.toLowerCase().includes(advancedSearch.description.toLowerCase()));
 
     return matchQuick && matchAdvanced;
+  });
+
+  const pinnedPage = getPinnedTablePage({
+    records: filteredStudents,
+    selectedRowKeys,
+    currentPage: tablePage,
+    pageSize: tablePageSize,
   });
 
   const totalWidth = columns
@@ -450,7 +525,7 @@ const Students = () => {
                   <label><input type="radio" name="student-gender" checked={advancedSearch.gender === 'Nam'} onChange={() => setAdvancedSearch(prev => ({ ...prev, gender: 'Nam' }))} /> Nam</label>
                   <label><input type="radio" name="student-gender" checked={advancedSearch.gender === 'Nữ'} onChange={() => setAdvancedSearch(prev => ({ ...prev, gender: 'Nữ' }))} /> Nữ</label>
                 </div>
-                <label>Mã lớp học:</label>
+                <label>Lớp học:</label>
                 <Input value={advancedSearch.classCode} onChange={event => setAdvancedSearch(prev => ({ ...prev, classCode: event.target.value }))} />
                 <label>Email:</label>
                 <Input value={advancedSearch.email} onChange={event => setAdvancedSearch(prev => ({ ...prev, email: event.target.value }))} />
@@ -481,8 +556,15 @@ const Students = () => {
             {showColumnFilter && (
               <div className="student-column-filter-panel">
                 {columns.map(column => (
-                  <label key={column.key} className="student-column-filter-item">
-                    <Checkbox checked={visibleColumnKeys.includes(column.key)} onChange={() => toggleColumn(column.key)} />
+                  <label
+                    key={column.key}
+                    className={`student-column-filter-item ${lockedVisibleColumnKeys.includes(column.key) ? 'is-disabled' : ''}`}
+                  >
+                    <Checkbox
+                      checked={visibleColumnKeys.includes(column.key)}
+                      disabled={lockedVisibleColumnKeys.includes(column.key)}
+                      onChange={() => toggleColumn(column.key)}
+                    />
                     <span>{column.title}</span>
                   </label>
                 ))}
@@ -499,18 +581,36 @@ const Students = () => {
           className="students-data-table"
           components={{ header: { cell: ResizableTitle } }}
           columns={renderedColumns}
-          dataSource={filteredStudents}
+          dataSource={pinnedPage.pageRows}
           loading={loading}
-          rowSelection={{ fixed: true, selectedRowKeys, onChange: setSelectedRowKeys }}
-          pagination={{
-            defaultPageSize: 10,
-            showSizeChanger: true,
-            pageSizeOptions: ['5', '10', '20'],
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${String(total).padStart(2, '0')}`,
+          rowSelection={{
+            fixed: true,
+            selectedRowKeys,
+            preserveSelectedRowKeys: true,
+            onChange: keys => setSelectedRowKeys(keys.map(String)),
           }}
+          pagination={false}
           scroll={{ x: totalWidth }}
           size="small"
         />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+          <Pagination
+            current={pinnedPage.currentPage}
+            pageSize={tablePageSize}
+            total={pinnedPage.paginationTotal}
+            showSizeChanger
+            pageSizeOptions={['5', '10', '20']}
+            showTotal={() => `Trang ${pinnedPage.currentPage}/${pinnedPage.totalPages} - ${pinnedPage.totalCount} học sinh`}
+            onChange={(page, size) => {
+              setTablePage(page);
+              setTablePageSize(size);
+            }}
+            onShowSizeChange={(_, size) => {
+              setTablePage(1);
+              setTablePageSize(size);
+            }}
+          />
+        </div>
       </div>
     </Card>
   )

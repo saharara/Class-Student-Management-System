@@ -1,0 +1,390 @@
+.detail-student-page {
+  position: relative;
+  min-height: calc(100vh - 70px);
+  padding: 24px 54px 54px 54px;
+  background: #ffffff;
+  color: #111111;
+  font-family: Arial, 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+}
+
+.detail-student-back-btn {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 20;
+}
+
+.detail-student-heading {
+  width: min(100%, 1120px);
+  margin: 0 auto 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-left: 4px;
+}
+
+.detail-student-heading h1 {
+  margin: 0;
+  color: #000000;
+  font-family: 'Times New Roman', serif;
+  font-size: 35px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.detail-student-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 20px;
+}
+
+.detail-student-actions .anticon {
+  cursor: pointer;
+}
+
+.detail-student-actions .danger {
+  color: #ff1f3d;
+}
+
+.detail-student-actions .success {
+  color: #00c853;
+}
+
+.detail-student-actions .primary {
+  color: #5b6cff;
+}
+
+.detail-student-actions .dark {
+  color: #111111;
+}
+
+.detail-student-actions .muted {
+  color: #8d98a8;
+}
+
+.detail-student-content {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  column-gap: 46px;
+  align-items: start;
+}
+
+.detail-student-content.is-loading {
+  opacity: .75;
+}
+
+.detail-student-photo-area {
+  padding-top: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.detail-student-photo-box {
+  width: 180px;
+  height: 180px;
+  border: 2px solid #143c91;
+  border-radius: 7px;
+  background: #f2f4f8;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-student-photo-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.detail-student-photo-label {
+  margin-top: 14px;
+  color: #000000;
+  font-family: 'Times New Roman', serif;
+  font-size: 21px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.detail-student-form-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 18px 24px;
+  align-items: start;
+}
+
+.detail-student-field {
+  position: relative;
+  min-height: 52px;
+  border: 2px solid #143c91;
+  border-radius: 6px;
+  background: #ffffff;
+  box-sizing: border-box;
+  padding: 14px 14px 8px;
+}
+
+.detail-student-field-label {
+  position: absolute;
+  top: -9px;
+  left: 12px;
+  z-index: 1;
+  padding: 0 5px;
+  background: #ffffff;
+  color: #143c91;
+  font-family: 'Times New Roman', serif;
+  font-size: 12px;
+  line-height: 15px;
+  font-weight: 700;
+}
+
+.detail-student-field-value,
+.detail-student-gender-row {
+  min-height: 24px;
+  color: #111111;
+  font-family: 'Times New Roman', serif;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.detail-student-field.is-multiline {
+  min-height: 134px;
+  padding-top: 22px;
+}
+
+.detail-student-field.is-multiline .detail-student-field-value {
+  line-height: 22px;
+}
+
+.detail-student-gender-row {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+}
+
+.detail-student-gender-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #a5a5a5;
+}
+
+.detail-student-gender-row span.is-active {
+  color: #111111;
+}
+
+.detail-student-gender-row i {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #a5a5a5;
+  border-radius: 50%;
+  box-sizing: border-box;
+  display: inline-block;
+  position: relative;
+}
+
+.detail-student-gender-row .is-active i {
+  border-color: #111111;
+}
+
+.detail-student-gender-row .is-active i::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #111111;
+}
+
+.detail-student-form-grid .code-field {
+  grid-column: 1 / span 4;
+}
+
+.detail-student-form-grid .name-field {
+  grid-column: 5 / span 8;
+}
+
+.detail-student-form-grid .birthday-field {
+  grid-column: 1 / span 4;
+}
+
+.detail-student-form-grid .gender-field {
+  grid-column: 5 / span 3;
+}
+
+.detail-student-form-grid .class-field {
+  grid-column: 8 / span 5;
+}
+
+.detail-student-form-grid .email-field,
+.detail-student-form-grid .username-field {
+  grid-column: 1 / span 6;
+}
+
+.detail-student-form-grid .facebook-field,
+.detail-student-form-grid .password-field {
+  grid-column: 7 / span 6;
+}
+
+.detail-student-form-grid .hometown-field,
+.detail-student-form-grid .address-field,
+.detail-student-form-grid .description-field {
+  grid-column: 1 / -1;
+}
+
+.detail-student-form-grid .hobby-field {
+  grid-column: 1 / span 5;
+}
+
+.detail-student-form-grid .hair-field {
+  grid-column: 6 / span 5;
+}
+
+.app-back-arrow-btn {
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #143c91 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 31px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+
+.app-back-arrow-btn:hover,
+.app-back-arrow-btn:focus {
+  color: #0b2d72 !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.app-back-arrow-btn .anticon {
+  display: block;
+}
+
+@media (max-width: 980px) {
+  .detail-student-page {
+    padding: 22px 18px 46px;
+  }
+
+  .detail-student-heading {
+    padding-left: 48px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .detail-student-content {
+    grid-template-columns: 1fr;
+    row-gap: 24px;
+  }
+
+  .detail-student-photo-area {
+    padding-top: 0;
+  }
+
+  .detail-student-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-student-form-grid .code-field,
+  .detail-student-form-grid .name-field,
+  .detail-student-form-grid .birthday-field,
+  .detail-student-form-grid .gender-field,
+  .detail-student-form-grid .class-field,
+  .detail-student-form-grid .email-field,
+  .detail-student-form-grid .username-field,
+  .detail-student-form-grid .facebook-field,
+  .detail-student-form-grid .password-field,
+  .detail-student-form-grid .hometown-field,
+  .detail-student-form-grid .address-field,
+  .detail-student-form-grid .hobby-field,
+  .detail-student-form-grid .hair-field,
+  .detail-student-form-grid .description-field {
+    grid-column: 1 / -1;
+  }
+}
+/* ================= SAMPLE DETAIL REFINEMENT ================= */
+.detail-student-content {
+  grid-template-columns: 270px minmax(0, 1fr);
+  column-gap: 42px;
+}
+
+.detail-student-photo-area {
+  padding-top: 18px;
+}
+
+.detail-student-photo-box {
+  width: 166px;
+  height: 166px;
+}
+
+.detail-student-form-grid {
+  gap: 14px 22px;
+}
+
+.detail-student-field {
+  min-height: 49px;
+}
+
+.detail-student-field.is-select-like {
+  padding-right: 34px;
+}
+
+.detail-student-select-caret {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid #a4a7ad;
+  transform: translateY(-30%);
+  pointer-events: none;
+}
+/* ================= PASSWORD VISIBILITY ================= */
+.detail-student-field.has-action {
+  padding-right: 48px;
+}
+
+.detail-student-password-eye {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7f8aa3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 19px;
+}
+
+.detail-student-password-eye:hover,
+.detail-student-password-eye:focus {
+  color: #143c91;
+  outline: none;
+}

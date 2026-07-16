@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Checkbox, Input, message, Table, Tooltip } from 'antd';
+import { Button, Card, Checkbox, Input, message, Pagination, Table, Tooltip } from 'antd';
 import {
   CaretDownOutlined,
   CaretUpOutlined,
@@ -17,9 +17,11 @@ import { useHistory } from 'react-router-dom';
 import { APP_PREFIX_PATH } from 'configs/AppConfig';
 import ClassroomService from 'services/ClassroomService';
 import { unwrapRecords } from 'services/OdooApiService';
+import { getPinnedTablePage } from 'utils/pinnedTableSelection';
+import confirmDelete from 'utils/confirmDelete';
 
 const initialColumns = [
-  { title: 'STT', dataIndex: 'stt', key: 'stt', width: 150 },
+  { title: 'STT', dataIndex: 'stt', key: 'stt', width: 80, type: 'index' },
   { title: 'Mã lớp học', dataIndex: 'code', key: 'code', width: 150 },
   { title: 'Tên lớp học', dataIndex: 'name', key: 'name', width: 150 },
   { title: 'Mô tả', dataIndex: 'description', key: 'description', width: 300, type: 'longText' },
@@ -38,7 +40,7 @@ const EMPTY_ADVANCED_SEARCH = {
 const mapClassroom = (record, index) => ({
   key: String(record.id),
   id: record.id,
-  stt: String(record.id || index + 1).padStart(5, '0'),
+  stt: String(index + 1),
   code: record.code || '',
   name: record.name || '',
   description: record.description || '',
@@ -78,6 +80,8 @@ const Classrooms = () => {
   const [quickSearch, setQuickSearch] = useState('');
   const [advancedSearch, setAdvancedSearch] = useState(EMPTY_ADVANCED_SEARCH);
   const [loading, setLoading] = useState(false);
+  const [tablePage, setTablePage] = useState(1);
+  const [tablePageSize, setTablePageSize] = useState(5);
 
   const loadClassrooms = async (search = quickSearch) => {
     setLoading(true);
@@ -88,6 +92,7 @@ const Classrooms = () => {
         columnlist: JSON.stringify(['id', 'code', 'name', 'description', 'student_count']),
       });
       setClassrooms(unwrapRecords(response).map(mapClassroom));
+      setTablePage(1);
     } catch (error) {
       message.error(error.message || 'Không tải được dữ liệu lớp học');
     } finally {
@@ -167,6 +172,19 @@ const Classrooms = () => {
     setShowActionMenu(false);
 
     if (action === 'copy') {
+      if (!selectedRowKeys.length) {
+        message.warning('Bạn chưa chọn dữ liệu để sao chép');
+        return;
+      }
+
+      try {
+        const response = await ClassroomService.massCopy(selectedIds());
+        message.success(response.message || 'Sao chép dữ liệu đã chọn thành công');
+        setSelectedRowKeys([]);
+        loadClassrooms();
+      } catch (error) {
+        message.error(error.message || 'Sao chép dữ liệu thất bại');
+      }
       return;
     }
 
@@ -183,17 +201,21 @@ const Classrooms = () => {
         return;
       }
 
-      try {
-        const response = await ClassroomService.massDelete(selectedIds());
-        message.success(response.message || 'Đã xóa dữ liệu đã chọn');
-        setSelectedRowKeys([]);
-        loadClassrooms();
-      } catch (error) {
-        message.error(error.message || 'Thao tác thất bại');
-      }
+      confirmDelete({
+        content: `Bạn có chắc chắn muốn xóa ${selectedRowKeys.length} lớp học đã chọn không?`,
+        onOk: async () => {
+          try {
+            const response = await ClassroomService.massDelete(selectedIds());
+            message.success(response.message || 'Đã xóa dữ liệu đã chọn');
+            setSelectedRowKeys([]);
+            loadClassrooms();
+          } catch (error) {
+            message.error(error.message || 'Thao tác thất bại');
+          }
+        },
+      });
       return;
     }
-
     if (action === 'import') {
       message.info('Chức năng nhập file lớp học sẽ được nối ở bước import');
       return;
@@ -202,23 +224,36 @@ const Classrooms = () => {
     message.success('Đã xuất dữ liệu theo mẫu');
   };
 
-  const handleDeleteOne = async record => {
+  const handleDeleteOne = record => {
     if (hasStudents(record)) {
       warnCannotDeleteClassrooms([record]);
       return;
     }
 
-    try {
-      const response = await ClassroomService.remove(record.id);
-      message.success(response.message || 'Xóa thành công');
-      setSelectedRowKeys(prev => prev.filter(key => key !== record.key));
-      loadClassrooms();
-    } catch (error) {
-      message.error(error.message || 'Xóa thất bại');
-    }
+    confirmDelete({
+      content: `Bạn có chắc chắn muốn xóa lớp học ${record.code || record.name || ''} không?`,
+      onOk: async () => {
+        try {
+          const response = await ClassroomService.remove(record.id);
+          message.success(response.message || 'Xóa thành công');
+          setSelectedRowKeys(prev => prev.filter(key => key !== record.key));
+          loadClassrooms();
+        } catch (error) {
+          message.error(error.message || 'Xóa thất bại');
+        }
+      },
+    });
   };
 
-  const handleCopyOne = () => {};
+  const handleCopyOne = async record => {
+    try {
+      const response = await ClassroomService.copy(record.id);
+      message.success(response.message || 'Sao chép thành công');
+      loadClassrooms();
+    } catch (error) {
+      message.error(error.message || 'Sao chép thất bại');
+    }
+  };
 
   const renderTextCell = (record, column, text) => {
     const cellKey = `${record.key}-${column.dataIndex}`;
@@ -240,6 +275,9 @@ const Classrooms = () => {
     history.push(`${APP_PREFIX_PATH}/classrooms/add`);
   };
 
+  const handleViewDetail = record => {
+    history.push(APP_PREFIX_PATH + '/classrooms/' + record.id);
+  };
   const ActionButtons = ({ record }) => {
     const deleteDisabled = hasStudents(record);
 
@@ -257,7 +295,7 @@ const Classrooms = () => {
         <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853' }} /></Tooltip>
         <Tooltip title="Nhân bản"><CopyOutlined style={{ color: '#5b6cff' }} onClick={() => handleCopyOne(record)} /></Tooltip>
         <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} /></Tooltip>
-        <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844' }} /></Tooltip>
+        <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844', cursor: 'pointer' }} onClick={() => handleViewDetail(record)} /></Tooltip>
       </div>
     );
   };
@@ -266,8 +304,16 @@ const Classrooms = () => {
     const visibleColumns = columns.filter(column => visibleColumnKeys.includes(column.key));
     const contentColumns = visibleColumns.map(column => ({
       ...column,
-      sorter: (a, b) => String(a[column.dataIndex] || '').localeCompare(String(b[column.dataIndex] || ''), 'vi'),
-      render: (value, record) => renderTextCell(record, column, value),
+      sorter: (a, b) => (column.type === 'index'
+        ? Number(a.stt) - Number(b.stt)
+        : String(a[column.dataIndex] || '').localeCompare(String(b[column.dataIndex] || ''), 'vi')),
+      render: (value, record, index) => {
+        if (column.type === 'index') {
+          return <span className="student-index-cell">{index + 1}</span>;
+        }
+
+        return renderTextCell(record, column, value);
+      },
       onHeaderCell: () => ({
         width: column.width,
         draggable: true,
@@ -299,6 +345,13 @@ const Classrooms = () => {
       (!advancedSearch.description || classroom.description.toLowerCase().includes(advancedSearch.description.toLowerCase()));
 
     return matchAdvanced;
+  });
+
+  const pinnedPage = getPinnedTablePage({
+    records: filteredClassrooms,
+    selectedRowKeys,
+    currentPage: tablePage,
+    pageSize: tablePageSize,
   });
 
   const totalWidth = columns
@@ -386,17 +439,35 @@ const Classrooms = () => {
           className="students-data-table classrooms-data-table"
           components={{ header: { cell: ResizableTitle } }}
           columns={renderedColumns}
-          dataSource={filteredClassrooms}
-          rowSelection={{ fixed: true, selectedRowKeys, onChange: setSelectedRowKeys }}
-          pagination={{
-            defaultPageSize: 5,
-            showSizeChanger: true,
-            pageSizeOptions: ['5', '10', '20'],
-            showTotal: (total, range) => `${range[0]}-${range[1]} của ${String(total).padStart(2, '0')}`,
+          dataSource={pinnedPage.pageRows}
+          rowSelection={{
+            fixed: true,
+            selectedRowKeys,
+            preserveSelectedRowKeys: true,
+            onChange: keys => setSelectedRowKeys(keys.map(String)),
           }}
+          pagination={false}
           scroll={{ x: totalWidth }}
           size="small"
         />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+          <Pagination
+            current={pinnedPage.currentPage}
+            pageSize={tablePageSize}
+            total={pinnedPage.paginationTotal}
+            showSizeChanger
+            pageSizeOptions={['5', '10', '20']}
+            showTotal={() => `Trang ${pinnedPage.currentPage}/${pinnedPage.totalPages} - ${pinnedPage.totalCount} lớp học`}
+            onChange={(page, size) => {
+              setTablePage(page);
+              setTablePageSize(size);
+            }}
+            onShowSizeChange={(_, size) => {
+              setTablePage(1);
+              setTablePageSize(size);
+            }}
+          />
+        </div>
       </div>
     </Card>
   );

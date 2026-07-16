@@ -4,6 +4,11 @@ const STUDENT_ENDPOINT = '/edmanage-student';
 
 const studentService = {};
 
+studentService.getHobbies = () => api({
+  url: `${STUDENT_ENDPOINT}/hobbies`,
+  method: 'get',
+});
+
 studentService.getAll = params => api({
   url: STUDENT_ENDPOINT,
   method: 'get',
@@ -12,6 +17,12 @@ studentService.getAll = params => api({
 
 studentService.getPage = (page = 1, params = {}) => api({
   url: `${STUDENT_ENDPOINT}/page/${page}`,
+  method: 'get',
+  params,
+});
+
+studentService.getById = (id, params = {}) => api({
+  url: `${STUDENT_ENDPOINT}/${id}`,
   method: 'get',
   params,
 });

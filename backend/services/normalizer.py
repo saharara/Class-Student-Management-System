@@ -160,19 +160,37 @@ class ApiNormalizer:
     def unique_copy_value(self, field_name, original, record_id):
         field = self.service.model._fields[field_name]
         max_size = getattr(field, "size", None)
+        original = str(original or field_name)
+
         if field_name == "email" and "@" in original:
             local_part, domain_part = original.split("@", 1)
-            base = "%s.copy%s@%s" % (local_part, record_id, domain_part)
-        else:
-            base = "%s-copy%s" % (original, record_id)
+            return self._unique_email_copy_value(field_name, local_part, domain_part, max_size)
 
-        if max_size:
-            base = base[:max_size]
+        return self._unique_suffix_copy_value(field_name, original, max_size)
 
-        candidate = base
-        index = 2
-        while self.service.model.search_count([(field_name, "=", candidate)]):
-            suffix = "-%s" % index
-            candidate = (base[: max_size - len(suffix)] + suffix) if max_size else base + suffix
+    def _unique_email_copy_value(self, field_name, local_part, domain_part, max_size):
+        index = 1
+        while True:
+            suffix = "(%s)" % index
+            domain = "@%s" % domain_part
+            if max_size:
+                max_local_size = max_size - len(domain) - len(suffix)
+                trimmed_local = local_part[:max(max_local_size, 0)]
+            else:
+                trimmed_local = local_part
+            candidate = "%s%s%s" % (trimmed_local, suffix, domain)
+            if not self.service.model.search_count([(field_name, "=", candidate)]):
+                return candidate
             index += 1
-        return candidate
+
+    def _unique_suffix_copy_value(self, field_name, original, max_size):
+        index = 1
+        while True:
+            suffix = "(%s)" % index
+            if max_size:
+                candidate = "%s%s" % (original[: max(max_size - len(suffix), 0)], suffix)
+            else:
+                candidate = "%s%s" % (original, suffix)
+            if not self.service.model.search_count([(field_name, "=", candidate)]):
+                return candidate
+            index += 1

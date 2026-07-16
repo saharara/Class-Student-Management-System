@@ -1,6 +1,7 @@
 from odoo import http
 
 from .api_utils import RestApiMixin
+from ..models.hobby_constants import HOBBY_OPTIONS
 
 
 class StudentController(http.Controller, RestApiMixin):
@@ -87,6 +88,10 @@ class StudentController(http.Controller, RestApiMixin):
     UNIQUE_COPY_FIELDS = ["code", "email", "username"]
     DEFAULT_ORDER = "code"
 
+
+    @http.route("/edmanage-student/hobbies", type="http", auth="user", methods=["GET"], csrf=False)
+    def hobbies_route(self, **kw):
+        return self._service().serializer.success(HOBBY_OPTIONS)
     @http.route("/edmanage-student", type="http", auth="user", methods=["GET"], csrf=False)
     def get_all_route(self, **kw):
         return self.get_all()

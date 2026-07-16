@@ -16,6 +16,12 @@ classroomService.getPage = (page = 1, params = {}) => api({
   params,
 });
 
+classroomService.getById = (id, params = {}) => api({
+  url: `${CLASS_ENDPOINT}/${id}`,
+  method: 'get',
+  params,
+});
+
 classroomService.create = data => api({
   url: CLASS_ENDPOINT,
   method: 'post',
@@ -28,9 +34,10 @@ classroomService.update = (id, data) => api({
   data,
 });
 
-classroomService.remove = id => api({
+classroomService.remove = (id, data = {}) => api({
   url: `${CLASS_ENDPOINT}/${id}`,
   method: 'delete',
+  data,
 });
 
 classroomService.copy = id => api({
@@ -39,10 +46,10 @@ classroomService.copy = id => api({
   data: { action: 'copy' },
 });
 
-classroomService.massDelete = ids => api({
+classroomService.massDelete = (ids, data = {}) => api({
   url: `${CLASS_ENDPOINT}/delete`,
   method: 'delete',
-  data: { idlist: ids },
+  data: { idlist: ids, ...data },
 });
 
 classroomService.massCopy = ids => api({

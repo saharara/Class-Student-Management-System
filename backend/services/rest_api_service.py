@@ -13,29 +13,29 @@ from .validator import ApiValidator
 class RestApiService:
     CONSTRAINT_MESSAGES = {
         "tra_class_code_unique": "Mã lớp đã tồn tại. Vui lòng nhập mã khác.",
+        "Mã lớp phải là duy nhất.": "Mã lớp đã tồn tại. Vui lòng nhập mã khác.",
         "tra_class_pkey": "ID lớp đã tồn tại.",
         "tra_student_code_unique": "Mã học sinh đã tồn tại. Vui lòng nhập mã khác.",
+        "Mã học sinh phải là duy nhất.": "Mã học sinh đã tồn tại. Vui lòng nhập mã khác.",
         "tra_student_email_unique": "Email đã tồn tại. Vui lòng nhập email khác.",
+        "Email phải là duy nhất.": "Email đã tồn tại. Vui lòng nhập email khác.",
         "tra_student_username_unique": "Tài khoản đã tồn tại. Vui lòng nhập tài khoản khác.",
+        "Tài khoản phải là duy nhất.": "Tài khoản đã tồn tại. Vui lòng nhập tài khoản khác.",
         "tra_student_pkey": "ID học sinh đã tồn tại.",
         "tra_student_class_id_fkey": "Lớp học không tồn tại. Vui lòng chọn lớp hợp lệ.",
     }
 
-    REQUIRED_FIELD_LABELS = {
-        "tra_class": {
-            "code": "Mã lớp",
-            "name": "Tên lớp",
-        },
-        "tra_student": {
-            "code": "Mã học sinh",
-            "fullname": "Họ và tên",
-            "dob": "Ngày sinh",
-            "email": "Email",
-            "class_id": "Lớp học",
-            "username": "Tài khoản",
-            "password": "Mật khẩu",
-        },
+    CONSTRAINT_FIELD_ERRORS = {
+        "tra_class_code_unique": ("code", "Mã lớp đã tồn tại. Vui lòng nhập mã khác."),
+        "Mã lớp phải là duy nhất.": ("code", "Mã lớp đã tồn tại. Vui lòng nhập mã khác."),
+        "tra_student_code_unique": ("code", "Mã học sinh đã tồn tại. Vui lòng nhập mã khác."),
+        "Mã học sinh phải là duy nhất.": ("code", "Mã học sinh đã tồn tại. Vui lòng nhập mã khác."),
+        "tra_student_email_unique": ("email", "Email đã tồn tại. Vui lòng nhập email khác."),
+        "Email phải là duy nhất.": ("email", "Email đã tồn tại. Vui lòng nhập email khác."),
+        "tra_student_username_unique": ("username", "Tài khoản đã tồn tại. Vui lòng nhập tài khoản khác."),
+        "Tài khoản phải là duy nhất.": ("username", "Tài khoản đã tồn tại. Vui lòng nhập tài khoản khác."),
     }
+
 
     def __init__(self, config):
         self.config = config
@@ -131,10 +131,10 @@ class RestApiService:
             record = self.model.create(self.normalizer.writable_values(payload))
         except ValidationError as exc:
             message = self._user_error_message(exc)
-            return self.serializer.error("E603", message, self._error_payload(message))
+            return self.serializer.error("E603", message, self._constraint_error_payload(exc) or self._error_payload(message))
         except Exception as exc:
             message = self._user_error_message(exc, action="create")
-            return self.serializer.error("E600", message, self._error_payload(message))
+            return self.serializer.error("E600", message, self._constraint_error_payload(exc) or self._error_payload(message))
         return self.serializer.success({"id": record.id}, "Thêm mới thành công.")
 
     def get_by_id(self, record_id):
@@ -298,26 +298,38 @@ class RestApiService:
         return self.serializer.success(result["data"])
 
     def _field_errors(self, payload):
-        if self.model_name != "tra_student":
-            return {}
+        return self.validator.field_errors(self.model_name, self.model, payload, self.normalizer)
 
-        source = payload.get("kw") if isinstance(payload.get("kw"), dict) else payload
-        labels = self.REQUIRED_FIELD_LABELS.get(self.model_name, {})
-        errors = {}
+    def _constraint_error_payload(self, exc):
+        field_error = self._constraint_field_error(str(exc))
+        if not field_error:
+            return None
 
-        for field_name, label in labels.items():
-            value = source.get(field_name)
-            if value in (None, ""):
-                errors[field_name] = "%s là trường bắt buộc." % label
+        field_name, error_message = field_error
+        return {"errors": {field_name: error_message}}
 
-        class_value = source.get("class_id")
-        if class_value not in (None, ""):
-            try:
-                self.normalizer.convert_writable_value("class_id", class_value)
-            except ValidationError:
-                errors["class_id"] = "Lớp học không tồn tại. Vui lòng chọn lớp hợp lệ."
+    def _constraint_field_error(self, message):
+        lower_message = (message or "").lower()
 
-        return errors
+        for marker, field_error in self.CONSTRAINT_FIELD_ERRORS.items():
+            if marker in message:
+                return field_error
+
+        if "duplicate key value" not in lower_message and "unique constraint" not in lower_message:
+            return None
+
+        if self.model_name == "tra_student":
+            if "email" in lower_message:
+                return "email", "Email đã tồn tại. Vui lòng nhập email khác."
+            if "username" in lower_message:
+                return "username", "Tài khoản đã tồn tại. Vui lòng nhập tài khoản khác."
+            if "code" in lower_message:
+                return "code", "Mã học sinh đã tồn tại. Vui lòng nhập mã khác."
+
+        if self.model_name == "tra_class" and "code" in lower_message:
+            return "code", "Mã lớp đã tồn tại. Vui lòng nhập mã khác."
+
+        return None
 
     def _error_payload(self, message):
         field_name = self._field_name_from_message(message)
@@ -346,6 +358,10 @@ class RestApiService:
     def _user_error_message(self, exc, action=None):
         message = str(exc)
         lower_message = message.lower()
+
+        constraint_field_error = self._constraint_field_error(message)
+        if constraint_field_error:
+            return constraint_field_error[1]
 
         for constraint_name, translated_message in self.CONSTRAINT_MESSAGES.items():
             if constraint_name in message:
@@ -381,9 +397,4 @@ class RestApiService:
         return message
 
     def _required_field_message(self, message):
-        labels = self.REQUIRED_FIELD_LABELS.get(self.model_name, {})
-        for field_name, label in labels.items():
-            if '"%s"' % field_name in message or "'%s'" % field_name in message:
-                if "null value in column" in message.lower() or "required" in message.lower():
-                    return "%s là trường bắt buộc." % label
-        return None
+        return self.validator.required_field_message(self.model_name, message)
