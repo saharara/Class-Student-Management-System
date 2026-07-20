@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Input, message } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { APP_PREFIX_PATH } from 'configs/AppConfig';
 import ClassroomService from 'services/ClassroomService';
 import { unwrapRecords } from 'services/OdooApiService';
+import confirmDiscardChanges from 'utils/confirmDiscardChanges';
+import { getNextCopyValue } from 'utils/copyFieldValue';
 
 import './addClassroom.css';
 
@@ -52,11 +54,15 @@ const getErrorSummary = fieldErrors => Object.values(fieldErrors)
   .filter(Boolean)
   .join(' | ');
 
-const AddClassroom = () => {
+const ClassroomForm = ({ mode = 'add' }) => {
   const history = useHistory();
+  const { id } = useParams();
+  const isEditing = mode === 'edit';
+  const isCopying = mode === 'copy';
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [existingClassCodes, setExistingClassCodes] = useState([]);
+  const [sourceCode, setSourceCode] = useState('');
 
   const loadExistingClassCodes = async () => {
     try {
@@ -65,6 +71,7 @@ const AddClassroom = () => {
       });
       setExistingClassCodes(
         unwrapRecords(response)
+          .filter(item => !isEditing || Number(item.id) !== Number(id))
           .map(item => String(item.code || '').trim().toLowerCase())
           .filter(Boolean)
       );
@@ -75,7 +82,28 @@ const AddClassroom = () => {
 
   useEffect(() => {
     loadExistingClassCodes();
+    if (isEditing || isCopying) {
+      ClassroomService.getById(id, {
+        columnlist: JSON.stringify(['id', 'code', 'name', 'description']),
+      }).then(response => {
+        const classroom = response?.data || {};
+        setSourceCode(classroom.code || '');
+        setFormData({
+          code: classroom.code || '',
+          name: classroom.name || '',
+          description: classroom.description || '',
+        });
+      }).catch(error => message.error(error.message || 'Không tải được thông tin lớp học'));
+    }
   }, []);
+  useEffect(() => {
+    if (isCopying && sourceCode && existingClassCodes.length) {
+      setFormData(prev => ({
+        ...prev,
+        code: getNextCopyValue(sourceCode, existingClassCodes, 50),
+      }));
+    }
+  }, [existingClassCodes, isCopying, sourceCode]);
   useEffect(() => {
     if (!existingClassCodes.length || !formData.code) {
       return;
@@ -97,6 +125,22 @@ const AddClassroom = () => {
     });
   };
 
+  const handleBack = () => {
+    const goToClassrooms = () => history.push(`${APP_PREFIX_PATH}/classrooms`);
+    if (isEditing || isCopying) {
+      confirmDiscardChanges({
+        onOk: goToClassrooms,
+        ...(isCopying ? {
+          title: 'Hủy sao chép?',
+          content: 'Thông tin bản sao chưa lưu sẽ bị mất. Bạn có muốn hủy sao chép không?',
+          okText: 'Hủy sao chép',
+        } : {}),
+      });
+      return;
+    }
+    goToClassrooms();
+  };
+
   const validateForm = () => {
     const nextErrors = {};
 
@@ -114,18 +158,28 @@ const AddClassroom = () => {
   const submitForm = async ({ stayOnPage = false } = {}) => {
     const clientErrors = validateForm();
     if (Object.keys(clientErrors).length) {
-      message.error(getErrorSummary(clientErrors) || 'Thêm mới lớp học thất bại');
+      message.error(getErrorSummary(clientErrors) || (isCopying ? 'Sao chép lớp học thất bại' : 'Thêm mới lớp học thất bại'));
       return;
     }
 
     try {
-      const response = await ClassroomService.create({
+      const payload = {
         code: formData.code.trim(),
         name: formData.name.trim(),
         description: formData.description.trim(),
-      });
+      };
+      const response = isEditing
+        ? await ClassroomService.update(id, payload)
+        : await ClassroomService.create(payload);
 
-      message.success(response.message || 'Thêm mới lớp học thành công');
+      message.success(response.message || (isEditing
+        ? 'Cập nhật lớp học thành công'
+        : (isCopying ? 'Sao chép lớp học thành công' : 'Thêm mới lớp học thành công')));
+
+      if (isEditing) {
+        history.push(`${APP_PREFIX_PATH}/classrooms`);
+        return;
+      }
 
       if (stayOnPage) {
         setFormData(EMPTY_FORM);
@@ -135,7 +189,9 @@ const AddClassroom = () => {
 
       history.push(`${APP_PREFIX_PATH}/classrooms`);
     } catch (error) {
-      const errorMessage = error.message || 'Thêm mới lớp học thất bại';
+      const errorMessage = error.message || (isEditing
+        ? 'Cập nhật lớp học thất bại'
+        : (isCopying ? 'Sao chép lớp học thất bại' : 'Thêm mới lớp học thất bại'));
       const serverErrors = mapServerErrors(error.payload?.data?.errors || error.payload?.errors);
 
       if (Object.keys(serverErrors).length) {
@@ -156,13 +212,16 @@ const AddClassroom = () => {
       <button
         type="button"
         className="add-classroom-back-btn app-back-arrow-btn"
-        onClick={() => history.push(`${APP_PREFIX_PATH}/classrooms`)}
+        onClick={handleBack}
         aria-label="Quay lại"
       >
         <ArrowLeftOutlined />
       </button>
 
-      <h1 className="add-classroom-title">Thêm lớp học mới</h1>
+      <h1 className="add-classroom-title">
+        {isEditing ? 'Sửa đổi thông tin lớp học' : (isCopying ? 'Sao chép thành công lớp học' : 'Thêm lớp học mới')}
+      </h1>
+      {isCopying && <p className="add-classroom-subtitle">Có thể hiệu chỉnh lại thông tin lớp học trước khi lưu</p>}
 
       <div className="add-classroom-form">
         <div className="add-classroom-field-row">
@@ -207,19 +266,19 @@ const AddClassroom = () => {
             className="add-classroom-save-btn"
             onClick={() => submitForm()}
           >
-            Lưu
+            {isEditing ? 'Lưu thay đổi' : 'Lưu'}
           </Button>
 
-          <Button
+          {!isEditing && !isCopying && <Button
             className="add-classroom-save-continue-btn"
             onClick={() => submitForm({ stayOnPage: true })}
           >
             Lưu và tiếp tục
-          </Button>
+          </Button>}
         </div>
       </div>
     </div>
   );
 };
 
-export default AddClassroom;
+export default ClassroomForm;

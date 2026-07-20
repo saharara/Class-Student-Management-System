@@ -177,14 +177,7 @@ const Classrooms = () => {
         return;
       }
 
-      try {
-        const response = await ClassroomService.massCopy(selectedIds());
-        message.success(response.message || 'Sao chép dữ liệu đã chọn thành công');
-        setSelectedRowKeys([]);
-        loadClassrooms();
-      } catch (error) {
-        message.error(error.message || 'Sao chép dữ liệu thất bại');
-      }
+      history.push(`${APP_PREFIX_PATH}/classrooms/copy-selected?ids=${selectedIds().join(',')}`);
       return;
     }
 
@@ -245,14 +238,8 @@ const Classrooms = () => {
     });
   };
 
-  const handleCopyOne = async record => {
-    try {
-      const response = await ClassroomService.copy(record.id);
-      message.success(response.message || 'Sao chép thành công');
-      loadClassrooms();
-    } catch (error) {
-      message.error(error.message || 'Sao chép thất bại');
-    }
+  const handleCopyOne = record => {
+    history.push(`${APP_PREFIX_PATH}/classrooms/${record.id}/copy`);
   };
 
   const renderTextCell = (record, column, text) => {
@@ -292,7 +279,7 @@ const Classrooms = () => {
             onClick={deleteDisabled ? undefined : () => handleDeleteOne(record)}
           />
         </Tooltip>
-        <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853' }} /></Tooltip>
+        <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853', cursor: 'pointer' }} onClick={() => history.push(`${APP_PREFIX_PATH}/classrooms/${record.id}/edit`)} /></Tooltip>
         <Tooltip title="Nhân bản"><CopyOutlined style={{ color: '#5b6cff' }} onClick={() => handleCopyOne(record)} /></Tooltip>
         <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} /></Tooltip>
         <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844', cursor: 'pointer' }} onClick={() => handleViewDetail(record)} /></Tooltip>

@@ -169,24 +169,12 @@ const DetailClassroom = () => {
       },
     });
   };
-  const handleCopyClassroom = async () => {
-    try {
-      const response = await ClassroomService.copy(id);
-      message.success(response.message || 'Sao chép lớp học thành công');
-      history.push(`${APP_PREFIX_PATH}/classrooms`);
-    } catch (error) {
-      message.error(error.message || 'Sao chép lớp học thất bại');
-    }
+  const handleCopyClassroom = () => {
+    history.push(`${APP_PREFIX_PATH}/classrooms/${id}/copy`);
   };
 
-  const handleCopyStudent = async record => {
-    try {
-      const response = await StudentService.copy(record.id);
-      message.success(response.message || 'Sao chép học sinh thành công');
-      await loadDetail();
-    } catch (error) {
-      message.error(error.message || 'Sao chép học sinh thất bại');
-    }
+  const handleCopyStudent = record => {
+    history.push(`${APP_PREFIX_PATH}/students/${record.id}/copy`);
   };
 
   const handleDeleteStudent = record => {
@@ -333,7 +321,7 @@ const DetailClassroom = () => {
       render: (_, record) => (
         <div className="detail-classroom-table-actions">
           <Tooltip title="Xóa"><DeleteOutlined className="danger" onClick={() => handleDeleteStudent(record)} /></Tooltip>
-          <Tooltip title="Sửa"><EditOutlined className="success" onClick={() => featurePending('Sửa học sinh')} /></Tooltip>
+          <Tooltip title="Sửa"><EditOutlined className="success" onClick={() => history.push(`${APP_PREFIX_PATH}/students/${record.id}/edit`)} /></Tooltip>
           <Tooltip title="Nhân bản"><CopyOutlined className="primary" onClick={() => handleCopyStudent(record)} /></Tooltip>
           <Tooltip title="Tải xuống"><DownloadOutlined className="muted" onClick={() => featurePending('Tải xuống học sinh')} /></Tooltip>
           <Tooltip title="Xem"><EyeOutlined className="dark" onClick={() => history.push(APP_PREFIX_PATH + '/students/' + record.id)} /></Tooltip>
@@ -363,7 +351,7 @@ const DetailClassroom = () => {
             />
           </Tooltip>
           <Tooltip title="Sửa lớp học">
-            <EditOutlined className="success" onClick={() => featurePending('Sửa lớp học')} />
+            <EditOutlined className="success" onClick={() => history.push(`${APP_PREFIX_PATH}/classrooms/${id}/edit`)} />
           </Tooltip>
           <Tooltip title="Nhân bản lớp học">
             <CopyOutlined className="primary" onClick={handleCopyClassroom} />

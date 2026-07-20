@@ -304,14 +304,7 @@ const Students = () => {
         return;
       }
 
-      try {
-        const response = await StudentService.massCopy(selectedIds());
-        setSelectedRowKeys([]);
-        message.success(response.message || 'Sao chép dữ liệu đã chọn thành công');
-        loadStudents();
-      } catch (error) {
-        message.error(error.message || 'Sao chép dữ liệu thất bại');
-      }
+      history.push(`${APP_PREFIX_PATH}/students/copy-selected?ids=${selectedIds().join(',')}`);
       return;
     }
 
@@ -355,14 +348,8 @@ const Students = () => {
     });
   };
 
-  const handleCopyOne = async record => {
-    try {
-      const response = await StudentService.copy(record.id);
-      message.success(response.message || 'Sao chép thành công');
-      loadStudents();
-    } catch (error) {
-      message.error(error.message || 'Sao chép thất bại');
-    }
+  const handleCopyOne = record => {
+    history.push(`${APP_PREFIX_PATH}/students/${record.id}/copy`);
   };
 
   const handleViewDetail = record => {
@@ -372,7 +359,7 @@ const Students = () => {
   const ActionButtons = ({ record }) => (
     <div className="student-table-actions">
       <Tooltip title="Xóa"><DeleteOutlined style={{ color: '#ff1f3d' }} onClick={() => handleDeleteOne(record)} /></Tooltip>
-      <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853' }} /></Tooltip>
+      <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853', cursor: 'pointer' }} onClick={() => history.push(`${APP_PREFIX_PATH}/students/${record.id}/edit`)} /></Tooltip>
       <Tooltip title="Nhân bản"><CopyOutlined style={{ color: '#5b6cff' }} onClick={() => handleCopyOne(record)} /></Tooltip>
       <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} /></Tooltip>
       <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844', cursor: 'pointer' }} onClick={() => handleViewDetail(record)} /></Tooltip>

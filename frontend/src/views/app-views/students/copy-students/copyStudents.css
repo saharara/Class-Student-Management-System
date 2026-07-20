@@ -1,0 +1,69 @@
+.copy-students-page {
+  position: relative;
+  min-height: calc(100vh - 70px);
+  padding: 32px 28px 70px;
+  background: #fff;
+  color: #111;
+}
+
+.copy-students-back { position: absolute; top: 20px; left: 8px; }
+
+.copy-students-page .app-back-arrow-btn {
+  width: 44px !important; height: 44px !important; padding: 0 !important;
+  border: 0 !important; border-radius: 0 !important; background: transparent !important;
+  color: #143c91 !important; display: inline-flex !important; align-items: center !important;
+  justify-content: center !important; font-size: 31px !important; cursor: pointer !important;
+  box-shadow: none !important;
+}
+
+.copy-students-page h1 { margin: 0; text-align: center; font-size: 30px; font-weight: 700; }
+.copy-students-page h1 strong { color: #13d94f; }
+.copy-students-subtitle { margin: 4px 0 52px; text-align: center; color: #8a8f98; font-size: 15px; font-weight: 600; }
+.copy-students-content { width: min(100%, 1380px); margin: 0 auto; }
+
+.copy-students-remove-selected {
+  height: 40px; margin: 0 0 22px 34px; border-color: #ff2748 !important;
+  color: #ff2748 !important; font-weight: 700;
+}
+.copy-students-remove-selected:hover { background: #fff1f0 !important; }
+
+.copy-students-page .ant-table { font-size: 12px; font-weight: 600; }
+.copy-students-page .ant-table-thead > tr > th { text-align: center; background: #f3f6f9; color: #111; font-weight: 700; }
+.copy-students-row-actions { display: flex; justify-content: center; gap: 14px; font-size: 18px; }
+.copy-students-row-actions .anticon-delete { color: #ff2748; }
+.copy-students-row-actions .anticon-edit { color: #18df62; }
+.copy-students-row-actions .anticon-edit.is-active { color: #b8c0cc; }
+
+.copy-students-editor { margin-top: 12px; }
+.copy-students-editor h2 { margin: 0 0 20px 24px; font-size: 20px; font-weight: 700; }
+.copy-students-editor-card {
+  width: min(100%, 1160px); margin: 0 auto; padding: 24px 30px; border: 1px solid #143c91;
+  border-radius: 7px; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 35px;
+  box-shadow: 0 2px 5px rgba(0,0,0,.14);
+}
+.copy-students-photo { display: flex; flex-direction: column; align-items: center; }
+.copy-students-photo-box { width: 160px; height: 150px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #eee; border-radius: 7px 7px 0 0; }
+.copy-students-photo-box img { width: 100%; height: 100%; object-fit: cover; }
+.copy-students-photo input { display: none; }
+.copy-students-photo .ant-btn { width: 160px; height: 38px; border-radius: 0 0 7px 7px; background: #143c91; }
+.copy-students-photo .copy-students-remove-photo { margin-top: 8px; border-radius: 6px; background: #fff !important; color: #ff2748 !important; border-color: #ff2748 !important; }
+.copy-students-photo > span { margin-top: 8px; font-weight: 700; }
+.copy-students-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 26px; }
+.copy-students-field { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
+.copy-students-field > span { color: #143c91; font-size: 13px; font-weight: 700; }
+.copy-students-field > span em { color: #ff2748; font-style: normal; }
+.copy-students-field .ant-select { width: 100%; }
+.copy-students-fields .ant-input,
+.copy-students-fields .ant-select-selector,
+.copy-students-fields .ant-radio-group { min-height: 44px; border-color: #143c91 !important; border-radius: 6px !important; font-weight: 600; }
+.copy-students-fields .ant-radio-group { display: flex; align-items: center; padding: 0 12px; border: 1px solid #143c91; }
+.copy-students-description { grid-column: 1 / -1; }
+.copy-students-description textarea { min-height: 90px; }
+.copy-students-finish-edit { grid-column: 2; width: 180px; height: 44px; margin-left: auto; background: #143c91 !important; font-weight: 700; }
+.copy-students-save { display: block; width: 220px; height: 52px; margin: 60px auto 0; background: #143c91 !important; border-color: #143c91 !important; border-radius: 7px; font-size: 18px; font-weight: 700; }
+
+@media (max-width: 850px) {
+  .copy-students-editor-card { grid-template-columns: 1fr; }
+  .copy-students-fields { grid-template-columns: 1fr; }
+  .copy-students-description, .copy-students-finish-edit { grid-column: 1; }
+}

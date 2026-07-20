@@ -142,14 +142,8 @@ const DetailStudent = () => {
     });
   };
 
-  const handleCopy = async () => {
-    try {
-      const response = await StudentService.copy(id);
-      message.success(response.message || 'Sao chép học sinh thành công');
-      history.push(`${APP_PREFIX_PATH}/students`);
-    } catch (error) {
-      message.error(error.message || 'Sao chép học sinh thất bại');
-    }
+  const handleCopy = () => {
+    history.push(`${APP_PREFIX_PATH}/students/${id}/copy`);
   };
 
   const featurePending = label => {
@@ -176,7 +170,7 @@ const DetailStudent = () => {
             <DeleteOutlined className="danger" onClick={handleDelete} />
           </Tooltip>
           <Tooltip title="Sửa học sinh">
-            <EditOutlined className="success" onClick={() => featurePending('Sửa học sinh')} />
+            <EditOutlined className="success" onClick={() => history.push(`${APP_PREFIX_PATH}/students/${id}/edit`)} />
           </Tooltip>
           <Tooltip title="Nhân bản học sinh">
             <CopyOutlined className="primary" onClick={handleCopy} />

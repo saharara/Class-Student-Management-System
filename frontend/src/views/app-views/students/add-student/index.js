@@ -3,16 +3,19 @@ import { Button, Input, message, Popover, Select } from 'antd';
 import {
   ArrowLeftOutlined,
   PlusOutlined,
+  DeleteOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
 } from '@ant-design/icons';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { ChromePicker } from 'react-color';
 import { APP_PREFIX_PATH } from 'configs/AppConfig';
 import ClassroomService from 'services/ClassroomService';
 import StudentService from 'services/StudentService';
 import { unwrapRecords } from 'services/OdooApiService';
 import { getHobbyMask, normalizeHobbyOptions } from 'constants/HobbyOptions';
+import confirmDiscardChanges from 'utils/confirmDiscardChanges';
+import { getNextCopyEmail, getNextCopyValue } from 'utils/copyFieldValue';
 import {
   getFieldError,
   getPasswordChecks,
@@ -85,8 +88,11 @@ const mapServerErrors = serverErrors => {
 const getErrorSummary = fieldErrors => Object.values(fieldErrors)
   .filter(Boolean)
   .join(' | ');
-const AddStudent = () => {
+const StudentForm = ({ mode = 'add' }) => {
   const history = useHistory();
+  const { id } = useParams();
+  const isEditing = mode === 'edit';
+  const isCopying = mode === 'copy';
   const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState(EMPTY_FORM);
@@ -95,6 +101,7 @@ const AddStudent = () => {
   const [photoPreview, setPhotoPreview] = useState('');
   const [photoBase64, setPhotoBase64] = useState('');
   const [photoFileName, setPhotoFileName] = useState('');
+  const [photoRemoved, setPhotoRemoved] = useState(false);
   const [showHairPicker, setShowHairPicker] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [classes, setClasses] = useState([]);
@@ -142,7 +149,9 @@ const AddStudent = () => {
       const response = await StudentService.getAll({
         columnlist: JSON.stringify(['id', 'code', 'email', 'username']),
       });
-      setExistingStudents(unwrapRecords(response));
+      setExistingStudents(
+        unwrapRecords(response).filter(item => !isEditing || Number(item.id) !== Number(id))
+      );
     } catch (error) {
       message.error(error.message || 'Không tải được dữ liệu kiểm tra trùng học sinh');
     }
@@ -152,6 +161,56 @@ const AddStudent = () => {
     loadClasses();
     loadHobbies();
     loadExistingStudents();
+    if (isEditing || isCopying) {
+      Promise.all([
+        StudentService.getById(id, {
+          columnlist: JSON.stringify([
+            'id', 'code', 'fullname', 'dob', 'sex', 'class_id', 'email', 'facebook',
+            'username', 'password', 'homecity', 'address', 'hobbies', 'hair_color',
+            'description', 'attachment',
+          ]),
+        }),
+        StudentService.getHobbies().catch(() => null),
+        StudentService.getAll({
+          columnlist: JSON.stringify(['id', 'code', 'email', 'username']),
+        }),
+      ]).then(([studentResponse, hobbyResponse, existingResponse]) => {
+        const student = studentResponse?.data || {};
+        const options = hobbyResponse ? normalizeHobbyOptions(unwrapRecords(hobbyResponse)) : [];
+        const copyRecords = unwrapRecords(existingResponse);
+        const classValue = Array.isArray(student.class_id)
+          ? student.class_id[0]
+          : (student.class_id?.id || student.class_id || '');
+        const color = student.hair_color || DEFAULT_HAIR_COLOR.color;
+        const matchingColor = HAIR_COLOR_OPTIONS.find(item => item.color.toLowerCase() === String(color).toLowerCase());
+
+        setFormData({
+          code: isCopying
+            ? getNextCopyValue(student.code || '', copyRecords.map(item => item.code), 50)
+            : (student.code || ''),
+          fullname: student.fullname || '',
+          dob: student.dob || '',
+          gender: student.sex ? 'male' : 'female',
+          classId: Number(classValue) || '',
+          email: isCopying
+            ? getNextCopyEmail(student.email || '', copyRecords.map(item => item.email), 256)
+            : (student.email || ''),
+          facebook: student.facebook || '',
+          username: isCopying
+            ? getNextCopyValue(student.username || '', copyRecords.map(item => item.username), 50)
+            : (student.username || ''),
+          password: student.password || '',
+          hometown: student.homecity || '',
+          address: student.address || '',
+          hobbies: options.filter(item => Math.floor(Number(student.hobbies || 0) / item.mask) % 2 === 1).map(item => item.code),
+          description: student.description || '',
+        });
+        setHairColor(matchingColor || { value: 'custom', label: 'Tùy chọn', color });
+        setPhotoPreview(student.attachment ? `data:image/png;base64,${student.attachment}` : '');
+        setPhotoBase64(isCopying ? (student.attachment || '') : '');
+        setPhotoFileName(isCopying && student.attachment ? 'student-copy.png' : '');
+      }).catch(error => message.error(error.message || 'Không tải được thông tin học sinh'));
+    }
   }, []);
 
   useEffect(() => {
@@ -201,6 +260,7 @@ const AddStudent = () => {
     setPhotoPreview('');
     setPhotoBase64('');
     setPhotoFileName('');
+    setPhotoRemoved(false);
   };
 
   const buildPayload = selectedClass => {
@@ -224,6 +284,9 @@ const AddStudent = () => {
     if (photoBase64) {
       payload.attachment = photoBase64;
       payload.attachment_filename = photoFileName;
+    } else if (isEditing && photoRemoved) {
+      payload.attachment = false;
+      payload.attachment_filename = false;
     }
 
     return payload;
@@ -232,7 +295,7 @@ const AddStudent = () => {
   const submitForm = async ({ stayOnPage = false } = {}) => {
     const clientErrors = validateForm();
     if (Object.keys(clientErrors).length) {
-      message.error(getErrorSummary(clientErrors) || 'Thêm mới học sinh thất bại');
+      message.error(getErrorSummary(clientErrors) || (isCopying ? 'Sao chép học sinh thất bại' : 'Thêm mới học sinh thất bại'));
       return;
     }
 
@@ -245,8 +308,22 @@ const AddStudent = () => {
     }
     setSubmitting(true);
     try {
-      const response = await StudentService.create(buildPayload(selectedClass));
-      message.success(response.message || 'Thêm mới thành công');
+      const response = isEditing
+        ? await StudentService.update(id, buildPayload(selectedClass))
+        : await StudentService.create(buildPayload(selectedClass));
+      message.success(response.message || (isEditing
+        ? 'Cập nhật học sinh thành công'
+        : (isCopying ? 'Sao chép học sinh thành công' : 'Thêm mới thành công')));
+
+      if (isCopying) {
+        history.push(`${APP_PREFIX_PATH}/students`);
+        return;
+      }
+
+      if (isEditing) {
+        history.push(`${APP_PREFIX_PATH}/students`);
+        return;
+      }
 
       setExistingStudents(prev => ([
         ...prev,
@@ -264,7 +341,9 @@ const AddStudent = () => {
 
       history.push(`${APP_PREFIX_PATH}/students`);
     } catch (error) {
-      const errorMessage = error.message || 'Thêm mới học sinh thất bại';
+      const errorMessage = error.message || (isEditing
+        ? 'Cập nhật học sinh thất bại'
+        : (isCopying ? 'Sao chép học sinh thất bại' : 'Thêm mới học sinh thất bại'));
       const lowerMessage = errorMessage.toLowerCase();
 
       const serverErrors = mapServerErrors(error.payload?.data?.errors || error.payload?.errors);
@@ -308,6 +387,7 @@ const AddStudent = () => {
 
     setPhotoPreview(URL.createObjectURL(file));
     setPhotoFileName(file.name);
+    setPhotoRemoved(false);
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -315,6 +395,32 @@ const AddStudent = () => {
       setPhotoBase64(result.includes(',') ? result.split(',')[1] : result);
     };
     reader.readAsDataURL(file);
+  };
+
+  const removePhoto = () => {
+    setPhotoPreview('');
+    setPhotoBase64('');
+    setPhotoFileName('');
+    setPhotoRemoved(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleBack = () => {
+    const goToStudents = () => history.push(`${APP_PREFIX_PATH}/students`);
+    if (isEditing || isCopying) {
+      confirmDiscardChanges({
+        onOk: goToStudents,
+        ...(isCopying ? {
+          title: 'Hủy sao chép?',
+          content: 'Thông tin bản sao chưa lưu sẽ bị mất. Bạn có muốn hủy sao chép không?',
+          okText: 'Hủy sao chép',
+        } : {}),
+      });
+      return;
+    }
+    goToStudents();
   };
 
   const hairColorPicker = (
@@ -367,16 +473,19 @@ const AddStudent = () => {
   );
 
   return (
-    <div className="add-student-page">
+    <div className={`add-student-page ${isEditing ? 'is-editing' : ''} ${isCopying ? 'is-copying' : ''}`}>
       <button
         type="button"
         className="add-student-back-btn app-back-arrow-btn"
-        onClick={() => history.push(`${APP_PREFIX_PATH}/students`)}
+        onClick={handleBack}
         aria-label="Quay lại"
       >
         <ArrowLeftOutlined />
       </button>
-      <h1 className="add-student-title">Thêm học sinh mới</h1>
+      <h1 className="add-student-title">
+        {isEditing ? 'Cập nhật học sinh' : (isCopying ? 'Sao chép thành công học sinh' : 'Thêm học sinh mới')}
+      </h1>
+      {isCopying && <p className="add-student-subtitle">Có thể hiệu chỉnh thông tin học sinh trước khi lưu</p>}
       <div className="add-student-frame">
         <div className="add-student-top">
           <div className="add-student-photo">
@@ -384,6 +493,11 @@ const AddStudent = () => {
               className="add-student-photo-box"
               style={photoPreview ? { backgroundImage: `url(${photoPreview})` } : undefined}
             />
+            {photoPreview && (
+              <button type="button" className="add-student-remove-photo" onClick={removePhoto} aria-label="Xóa ảnh">
+                <DeleteOutlined />
+              </button>
+            )}
 
             <input
               ref={fileInputRef}
@@ -667,16 +781,16 @@ const AddStudent = () => {
               loading={submitting}
               onClick={() => submitForm()}
             >
-              Lưu
+              {isEditing ? 'Lưu thay đổi' : 'Lưu'}
             </Button>
 
-            <Button
+            {!isEditing && !isCopying && <Button
               className="add-student-save-continue-btn"
               loading={submitting}
               onClick={() => submitForm({ stayOnPage: true })}
             >
               Lưu và tiếp tục
-            </Button>
+            </Button>}
           </div>
         </div>
       </div>
@@ -684,4 +798,4 @@ const AddStudent = () => {
   );
 };
 
-export default AddStudent;
+export default StudentForm;

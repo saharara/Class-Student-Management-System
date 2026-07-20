@@ -44,6 +44,14 @@
   font-weight: 700;
 }
 
+.add-classroom-subtitle {
+  margin: -34px 0 54px;
+  text-align: center;
+  color: #8a8f98;
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .add-classroom-form {
   width: min(100%, 1320px);
   margin: 0 auto;
