@@ -58,4 +58,16 @@ classroomService.massCopy = ids => api({
   data: { idlist: ids },
 });
 
+classroomService.importData = data => api({
+  url: `${CLASS_ENDPOINT}/import`,
+  method: 'post',
+  data,
+});
+
+classroomService.exportData = params => api({
+  url: `${CLASS_ENDPOINT}/export`,
+  method: 'get',
+  params,
+});
+
 export default classroomService;

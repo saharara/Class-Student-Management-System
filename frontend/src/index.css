@@ -15,3 +15,39 @@
 .loading .ant-spin {
   color: #3e79f7;
 }
+
+/* One back-arrow treatment for every application screen. */
+body .App button.app-back-arrow-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #143c91 !important;
+  font-size: 32px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+
+body .App button.app-back-arrow-btn:hover,
+body .App button.app-back-arrow-btn:focus,
+body .App button.app-back-arrow-btn:active {
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #0b2d72 !important;
+}
+
+body .App button.app-back-arrow-btn .anticon,
+body .App button.app-back-arrow-btn svg {
+  display: block !important;
+  width: 1em !important;
+  height: 1em !important;
+}

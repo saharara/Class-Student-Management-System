@@ -32,7 +32,7 @@ class TraStudent(models.Model):
         help="32-bit bitmask. Bit 0 maps to hobby code 1; bit 31 maps to hobby code 32.",
     )
     hair_color = fields.Char(string="Màu tóc", size=7)
-    email = fields.Char(string="Email", required=True, size=256)
+    email = fields.Char(string="Email", size=256)
     facebook = fields.Char(string="Facebook", size=256)
     class_id = fields.Many2one(
         "tra_class",
@@ -53,6 +53,20 @@ class TraStudent(models.Model):
         ("tra_student_username_unique", "unique(username)", "Tài khoản phải là duy nhất."),
     ]
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not self.env.context.get("allow_missing_email_for_copy"):
+            for values in vals_list:
+                if not values.get("email"):
+                    raise ValidationError("Email là trường bắt buộc.")
+        return super().create(vals_list)
+
+    def write(self, values):
+        if "email" in values and not values.get("email") and not self.env.context.get("allow_missing_email_for_copy"):
+            if any(record.email for record in self):
+                raise ValidationError("Email là trường bắt buộc.")
+        return super().write(values)
+
     @api.constrains(
         "code",
         "fullname",
@@ -65,6 +79,12 @@ class TraStudent(models.Model):
         "password",
     )
     def _check_constraints(self):
+        """Mô tả: Kiểm tra độ dài và định dạng dữ liệu sinh viên.
+        Input: self - recordset sinh viên cần kiểm tra.
+        Output: Không trả dữ liệu khi tất cả trường hợp lệ.
+        Ràng buộc: Tuân theo giới hạn trường, mẫu email, Facebook và mật khẩu.
+        Ngoại lệ: ValidationError tại điều kiện không hợp lệ đầu tiên.
+        """
         for record in self:
             record._check_length("code", 50, "Mã học sinh")
             record._check_length("fullname", 30, "Họ và tên")
@@ -90,6 +110,12 @@ class TraStudent(models.Model):
 
     @api.constrains("attachment", "attachment_filename")
     def _check_attachment(self):
+        """Mô tả: Kiểm tra định dạng và dung lượng ảnh thẻ.
+        Input: self - recordset sinh viên có attachment.
+        Output: Không trả dữ liệu khi tệp hợp lệ hoặc không có tệp.
+        Ràng buộc: Chỉ jpg/jpeg/png, base64 hợp lệ và tối đa 5 MB.
+        Ngoại lệ: ValidationError khi sai phần mở rộng, base64 hoặc dung lượng.
+        """
         for record in self:
             if not record.attachment:
                 continue
@@ -105,12 +131,24 @@ class TraStudent(models.Model):
                 raise ValidationError("Ảnh thẻ không được vượt quá 5MB.")
 
     def _check_length(self, field_name, max_length, label):
+        """Mô tả: Kiểm tra độ dài một trường văn bản của sinh viên.
+        Input: tên trường, độ dài tối đa và nhãn hiển thị.
+        Output: Không trả dữ liệu khi giá trị nằm trong giới hạn.
+        Ràng buộc: field_name phải truy cập được trên record hiện tại.
+        Ngoại lệ: ValidationError khi giá trị dài hơn max_length.
+        """
         value = self[field_name]
         if value and len(value) > max_length:
             raise ValidationError("%s không được vượt quá %s ký tự." % (label, max_length))
 
     @api.constrains("hobbies")
     def _check_hobbies_bitmask(self):
+        """Mô tả: Kiểm tra miền giá trị bitmask sở thích.
+        Input: self - recordset sinh viên cần kiểm tra.
+        Output: Không trả dữ liệu khi bitmask hợp lệ.
+        Ràng buộc: hobbies phải nằm từ 0 đến UINT32_MAX.
+        Ngoại lệ: ValidationError khi bitmask nằm ngoài miền.
+        """
         for record in self:
             if record.hobbies < 0 or record.hobbies > UINT32_MAX:
                 raise ValidationError("Sở thích dạng bitmask phải nằm trong khoảng từ 0 đến %s." % UINT32_MAX)

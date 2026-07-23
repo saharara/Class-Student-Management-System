@@ -274,6 +274,7 @@ const Students = () => {
 
   const selectedIds = () => selectedRowKeys.map(key => Number(key)).filter(Boolean);
 
+
   const runAction = async action => {
     setShowActionMenu(false);
 
@@ -309,7 +310,18 @@ const Students = () => {
     }
 
     if (action === 'import') {
-      message.info('Chức năng nhập file học sinh sẽ được nối ở bước import');
+      history.push(`${APP_PREFIX_PATH}/students/import`);
+      return;
+    }
+
+    if (action === 'export') {
+      if (!selectedRowKeys.length) {
+        message.warning('Bạn chưa chọn dữ liệu để xuất');
+        return;
+      }
+      history.push(
+        APP_PREFIX_PATH + '/students/export?ids=' + selectedIds().join(',')
+      );
       return;
     }
 

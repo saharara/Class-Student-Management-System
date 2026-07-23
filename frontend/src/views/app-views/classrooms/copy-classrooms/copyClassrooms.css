@@ -146,3 +146,8 @@
   .copy-classrooms-content.has-editor { grid-template-columns: 1fr; }
   .copy-classrooms-subtitle { margin-bottom: 36px; }
 }
+.copy-classrooms-status { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.copy-classrooms-status.is-ok { color: #18a957; }
+.copy-classrooms-status.is-error { color: #e53935; cursor: help; }
+.copy-classrooms-status-block { text-align: left; }
+.copy-classrooms-status-errors { margin-top: 5px; color: #d9363e; font-size: 12px; font-weight: 600; line-height: 1.4; white-space: normal; }

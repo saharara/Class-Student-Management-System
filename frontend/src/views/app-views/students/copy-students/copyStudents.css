@@ -67,3 +67,8 @@
   .copy-students-fields { grid-template-columns: 1fr; }
   .copy-students-description, .copy-students-finish-edit { grid-column: 1; }
 }
+.copy-students-status { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.copy-students-status.is-ok { color: #18a957; }
+.copy-students-status.is-error { color: #e53935; cursor: help; }
+.copy-students-status-block { text-align: left; }
+.copy-students-status-errors { margin-top: 5px; color: #d9363e; font-size: 12px; font-weight: 600; line-height: 1.4; white-space: normal; }

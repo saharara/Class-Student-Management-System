@@ -395,7 +395,11 @@ const DetailClassroom = () => {
                 prefix={<SearchOutlined />}
               />
             </div>
-            <Button className="student-primary-btn" type="primary" onClick={() => history.push(`${APP_PREFIX_PATH}/students/add`)}>
+            <Button
+              className="student-primary-btn"
+              type="primary"
+              onClick={() => history.push(`${APP_PREFIX_PATH}/students/add?classId=${id}`)}
+            >
               Thêm học sinh
             </Button>
           </div>

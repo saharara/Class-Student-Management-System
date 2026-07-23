@@ -156,6 +156,7 @@ const Classrooms = () => {
 
   const selectedIds = () => selectedRowKeys.map(key => Number(key)).filter(Boolean);
 
+
   const studentCountOf = record => Number(record.studentCount || record.student_count || 0);
 
   const hasStudents = record => studentCountOf(record) > 0;
@@ -210,7 +211,18 @@ const Classrooms = () => {
       return;
     }
     if (action === 'import') {
-      message.info('Chức năng nhập file lớp học sẽ được nối ở bước import');
+      history.push(`${APP_PREFIX_PATH}/classrooms/import`);
+      return;
+    }
+
+    if (action === 'export') {
+      if (!selectedRowKeys.length) {
+        message.warning('Bạn chưa chọn dữ liệu để xuất');
+        return;
+      }
+      history.push(
+        APP_PREFIX_PATH + '/classrooms/export?ids=' + selectedIds().join(',')
+      );
       return;
     }
 
@@ -218,11 +230,6 @@ const Classrooms = () => {
   };
 
   const handleDeleteOne = record => {
-    if (hasStudents(record)) {
-      warnCannotDeleteClassrooms([record]);
-      return;
-    }
-
     confirmDelete({
       content: `Bạn có chắc chắn muốn xóa lớp học ${record.code || record.name || ''} không?`,
       onOk: async () => {

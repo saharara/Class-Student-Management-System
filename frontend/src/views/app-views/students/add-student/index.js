@@ -7,7 +7,7 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
 } from '@ant-design/icons';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { ChromePicker } from 'react-color';
 import { APP_PREFIX_PATH } from 'configs/AppConfig';
 import ClassroomService from 'services/ClassroomService';
@@ -15,7 +15,7 @@ import StudentService from 'services/StudentService';
 import { unwrapRecords } from 'services/OdooApiService';
 import { getHobbyMask, normalizeHobbyOptions } from 'constants/HobbyOptions';
 import confirmDiscardChanges from 'utils/confirmDiscardChanges';
-import { getNextCopyEmail, getNextCopyValue } from 'utils/copyFieldValue';
+import { getNextCopyValue } from 'utils/copyFieldValue';
 import {
   getFieldError,
   getPasswordChecks,
@@ -90,12 +90,19 @@ const getErrorSummary = fieldErrors => Object.values(fieldErrors)
   .join(' | ');
 const StudentForm = ({ mode = 'add' }) => {
   const history = useHistory();
+  const location = useLocation();
   const { id } = useParams();
   const isEditing = mode === 'edit';
   const isCopying = mode === 'copy';
+  const defaultClassId = !isEditing && !isCopying
+    ? Number(new URLSearchParams(location.search).get('classId')) || ''
+    : '';
   const fileInputRef = useRef(null);
 
-  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [formData, setFormData] = useState({
+    ...EMPTY_FORM,
+    classId: defaultClassId,
+  });
   const [errors, setErrors] = useState({});
   const [hairColor, setHairColor] = useState(DEFAULT_HAIR_COLOR);
   const [photoPreview, setPhotoPreview] = useState('');
@@ -192,9 +199,7 @@ const StudentForm = ({ mode = 'add' }) => {
           dob: student.dob || '',
           gender: student.sex ? 'male' : 'female',
           classId: Number(classValue) || '',
-          email: isCopying
-            ? getNextCopyEmail(student.email || '', copyRecords.map(item => item.email), 256)
-            : (student.email || ''),
+          email: isCopying ? '' : (student.email || ''),
           facebook: student.facebook || '',
           username: isCopying
             ? getNextCopyValue(student.username || '', copyRecords.map(item => item.username), 50)
@@ -243,6 +248,9 @@ const StudentForm = ({ mode = 'add' }) => {
     const nextErrors = {};
 
     VALIDATED_FIELDS.forEach(field => {
+      if (isCopying && field === 'email') {
+        return;
+      }
       const fieldError = getFieldError(field, formData, hairColor, existingStudents);
       if (fieldError) {
         nextErrors[field] = fieldError;
@@ -254,7 +262,10 @@ const StudentForm = ({ mode = 'add' }) => {
   };
 
   const resetForm = () => {
-    setFormData(EMPTY_FORM);
+    setFormData({
+      ...EMPTY_FORM,
+      classId: defaultClassId,
+    });
     setErrors({});
     setHairColor(DEFAULT_HAIR_COLOR);
     setPhotoPreview('');
@@ -270,7 +281,7 @@ const StudentForm = ({ mode = 'add' }) => {
       dob: formData.dob,
       sex: formData.gender === 'male',
       class_id: selectedClass?.code || Number(formData.classId),
-      email: formData.email.trim(),
+      email: isCopying ? '' : formData.email.trim(),
       facebook: formData.facebook.trim(),
       username: formData.username.trim(),
       password: formData.password,
@@ -279,6 +290,7 @@ const StudentForm = ({ mode = 'add' }) => {
       hobbies: getHobbyMask(formData.hobbies, hobbyOptions),
       hair_color: hairColor?.color || DEFAULT_HAIR_COLOR.color,
       description: formData.description.trim(),
+      ...(isCopying ? { action: 'copy' } : {}),
     };
 
     if (photoBase64) {
@@ -329,7 +341,7 @@ const StudentForm = ({ mode = 'add' }) => {
         ...prev,
         {
           code: formData.code.trim(),
-          email: formData.email.trim(),
+          email: isCopying ? '' : formData.email.trim(),
           username: formData.username.trim(),
         },
       ]));
@@ -408,10 +420,14 @@ const StudentForm = ({ mode = 'add' }) => {
   };
 
   const handleBack = () => {
-    const goToStudents = () => history.push(`${APP_PREFIX_PATH}/students`);
+    const goBack = () => history.push(
+      defaultClassId
+        ? `${APP_PREFIX_PATH}/classrooms/${defaultClassId}`
+        : `${APP_PREFIX_PATH}/students`
+    );
     if (isEditing || isCopying) {
       confirmDiscardChanges({
-        onOk: goToStudents,
+        onOk: goBack,
         ...(isCopying ? {
           title: 'Hủy sao chép?',
           content: 'Thông tin bản sao chưa lưu sẽ bị mất. Bạn có muốn hủy sao chép không?',
@@ -420,7 +436,7 @@ const StudentForm = ({ mode = 'add' }) => {
       });
       return;
     }
-    goToStudents();
+    goBack();
   };
 
   const hairColorPicker = (
@@ -616,12 +632,11 @@ const StudentForm = ({ mode = 'add' }) => {
             </div>
 
             <label className={`add-student-field email-field ${errors.email ? 'has-error' : ''}`}>
-              <span>
-                Email<em className="req-star"> *</em>
-              </span>
+              <span>Email{isCopying ? ' (bản sao không có email)' : <em className="req-star"> *</em>}</span>
               <Input
                 value={formData.email}
-                placeholder="Email học sinh *"
+                disabled={isCopying}
+                placeholder={isCopying ? 'Không có email' : 'Email học sinh *'}
                 onChange={event => updateField('email', event.target.value)}
               />
               {errors.email && <div className="add-student-error">{errors.email}</div>}

@@ -39,6 +39,12 @@ HOBBY_LABELS = {item["code"]: item["name"] for item in HOBBY_OPTIONS}
 
 
 def hobby_mask(codes):
+    """Mô tả: Chuyển danh sách mã sở thích thành giá trị bitmask 32 bit.
+    Input: codes - iterable chứa mã sở thích có thể ép sang số nguyên.
+    Output: Số nguyên biểu diễn hợp các bit sở thích hợp lệ.
+    Ràng buộc: Chỉ mã từ 1 đến 32 có trong HOBBY_OPTIONS được ghi nhận.
+    Ngoại lệ: ValueError hoặc TypeError nếu một mã không thể ép sang số nguyên.
+    """
     mask = 0
     for code in codes:
         item = HOBBY_BY_CODE.get(int(code))
@@ -48,10 +54,22 @@ def hobby_mask(codes):
 
 
 def hobby_codes(mask):
+    """Mô tả: Giải mã bitmask thành danh sách mã sở thích.
+    Input: mask - giá trị bitmask; giá trị rỗng được xem là 0.
+    Output: Danh sách mã sở thích theo thứ tự cấu hình.
+    Ràng buộc: Chỉ 32 bit được định nghĩa trong HOBBY_OPTIONS được đọc.
+    Ngoại lệ: ValueError hoặc TypeError nếu mask không thể ép sang số nguyên.
+    """
     mask = int(mask or 0)
     return [item["code"] for item in HOBBY_OPTIONS if mask & item["mask"]]
 
 
 def hobby_names(mask):
+    """Mô tả: Giải mã bitmask thành danh sách tên sở thích.
+    Input: mask - giá trị bitmask; giá trị rỗng được xem là 0.
+    Output: Danh sách tên sở thích theo thứ tự cấu hình.
+    Ràng buộc: Chỉ 32 bit được định nghĩa trong HOBBY_OPTIONS được đọc.
+    Ngoại lệ: ValueError hoặc TypeError nếu mask không thể ép sang số nguyên.
+    """
     mask = int(mask or 0)
     return [item["name"] for item in HOBBY_OPTIONS if mask & item["mask"]]

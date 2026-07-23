@@ -38,6 +38,7 @@ STUDENT_RULE = {
         },
         "email": {
             "required": True,
+            "required_on_copy": False,
             "label": "Email",
             "unique": True,
         },

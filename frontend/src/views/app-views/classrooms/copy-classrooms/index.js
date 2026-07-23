@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Input, message, Table, Tooltip } from 'antd';
-import { ArrowLeftOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+} from '@ant-design/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import { APP_PREFIX_PATH } from 'configs/AppConfig';
 import ClassroomService from 'services/ClassroomService';
@@ -97,14 +103,26 @@ const CopyClassrooms = () => {
     onOk: () => history.push(`${APP_PREFIX_PATH}/classrooms`),
   });
 
+  const getRowErrors = (row, allRows = rows) => {
+    const errors = [];
+    const code = row.code.trim().toLowerCase();
+
+    if (!code) errors.push('Thiếu mã lớp học');
+    else if (row.code.trim().length > 50) errors.push('Mã lớp học vượt quá 50 ký tự');
+    if (!row.name.trim()) errors.push('Thiếu tên lớp học');
+    else if (row.name.trim().length > 100) errors.push('Tên lớp học vượt quá 100 ký tự');
+    if (code && (existingCodes.includes(code)
+      || allRows.filter(item => item.code.trim().toLowerCase() === code).length > 1)) {
+      errors.push('Mã lớp học bị trùng');
+    }
+    return errors;
+  };
+
   const validateRows = () => {
     if (!rows.length) return 'Không còn lớp học nào để sao chép';
-    const codes = rows.map(row => row.code.trim().toLowerCase());
-    if (rows.some(row => !row.code.trim())) return 'Mã lớp học là bắt buộc';
-    if (rows.some(row => !row.name.trim())) return 'Tên lớp học là bắt buộc';
-    if (new Set(codes).size !== codes.length) return 'Mã lớp học trong danh sách sao chép không được trùng nhau';
-    if (codes.some(code => existingCodes.includes(code))) return 'Mã lớp học đã tồn tại';
-    return '';
+    const invalidIndex = rows.findIndex(row => getRowErrors(row).length);
+    if (invalidIndex < 0) return '';
+    return `Dòng ${invalidIndex + 1}: ${getRowErrors(rows[invalidIndex]).join(', ')}`;
   };
 
   const saveCopies = async () => {
@@ -136,9 +154,29 @@ const CopyClassrooms = () => {
     { title: 'Tên lớp', dataIndex: 'name', width: 170 },
     { title: 'Mô tả', dataIndex: 'description', ellipsis: true },
     {
+      title: 'Kiểm tra',
+      width: 240,
+      align: 'center',
+      fixed: 'right',
+      render: (_, row) => {
+        const rowErrors = getRowErrors(row);
+        return rowErrors.length ? (
+          <div className="copy-classrooms-status-block">
+            <span className="copy-classrooms-status is-error"><CloseCircleOutlined /> Có lỗi</span>
+            <div className="copy-classrooms-status-errors">
+              {rowErrors.map(error => <div key={error}>• {error}</div>)}
+            </div>
+          </div>
+        ) : (
+          <span className="copy-classrooms-status is-ok"><CheckCircleOutlined /> OK</span>
+        );
+      },
+    },
+    {
       title: 'Hành động',
       width: 110,
       align: 'center',
+      fixed: 'right',
       render: (_, record) => (
         <div className="copy-classrooms-row-actions">
           <Tooltip title="Xóa"><DeleteOutlined onClick={() => removeRow(record.key)} /></Tooltip>
@@ -172,10 +210,12 @@ const CopyClassrooms = () => {
             columns={columns}
             dataSource={rows}
             rowSelection={{
+              fixed: true,
               selectedRowKeys,
               onChange: keys => setSelectedRowKeys(keys.map(String)),
             }}
             pagination={false}
+            scroll={{ x: 900 }}
             size="small"
           />
         </div>

@@ -25,6 +25,12 @@ except ImportError:
 
 class ExportFactory:
     def export(self, model_name, fields_list, data, export_type):
+        """Mô tả: Xuất dữ liệu theo định dạng được yêu cầu.
+        Input: tên model, danh sách trường, các dòng dữ liệu và loại tệp.
+        Output: Dictionary chứa JSON, tệp base64 hoặc thông tin lỗi.
+        Ràng buộc: Hỗ trợ json, csv, xml, xlsx, pdf và docx.
+        Ngoại lệ: Lỗi thiếu thư viện hoặc loại tệp được trả với mã L601.
+        """
         export_type = (export_type or "json").lower()
         if export_type == "json":
             return {"type": "json", "data": data}
@@ -55,6 +61,12 @@ class ExportFactory:
         }
 
     def _records_to_csv(self, model_name, fields_list, data):
+        """Mô tả: Chuyển dữ liệu record thành tệp CSV.
+        Input: tên model, danh sách trường và danh sách dictionary.
+        Output: Tuple tên tệp, MIME type và bytes UTF-8 có BOM.
+        Ràng buộc: Các khóa dữ liệu phải phù hợp fields_list.
+        Ngoại lệ: Ngoại lệ csv được truyền lên.
+        """
         output = io.StringIO()
         writer = csv.DictWriter(output, fieldnames=fields_list)
         writer.writeheader()
@@ -62,6 +74,12 @@ class ExportFactory:
         return "%s_export.csv" % model_name, "text/csv", output.getvalue().encode("utf-8-sig")
 
     def _records_to_xml(self, model_name, data):
+        """Mô tả: Chuyển dữ liệu record thành tài liệu XML.
+        Input: tên model và danh sách dictionary dữ liệu.
+        Output: Tuple tên tệp, MIME type và bytes XML.
+        Ràng buộc: Tên khóa phải dùng được làm tên thẻ XML.
+        Ngoại lệ: Ngoại lệ ElementTree được truyền lên.
+        """
         root = ET.Element("records")
         for row in data:
             record_node = ET.SubElement(root, "record")
@@ -75,6 +93,12 @@ class ExportFactory:
         )
 
     def _records_to_xlsx(self, model_name, fields_list, data):
+        """Mô tả: Chuyển dữ liệu record thành workbook XLSX.
+        Input: tên model, danh sách trường và dữ liệu.
+        Output: Tuple tên tệp, MIME type và bytes XLSX.
+        Ràng buộc: xlsxwriter phải được cài đặt.
+        Ngoại lệ: Ngoại lệ ghi workbook được truyền lên.
+        """
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output, {"in_memory": True})
         worksheet = workbook.add_worksheet("Data")
@@ -92,6 +116,12 @@ class ExportFactory:
         )
 
     def _records_to_pdf(self, model_name, fields_list, data):
+        """Mô tả: Chuyển dữ liệu record thành bảng trong tệp PDF.
+        Input: tên model, danh sách trường và dữ liệu.
+        Output: Tuple tên tệp, MIME type và bytes PDF.
+        Ràng buộc: reportlab phải được cài đặt.
+        Ngoại lệ: Ngoại lệ tạo tài liệu được truyền lên.
+        """
         output = io.BytesIO()
         document = SimpleDocTemplate(
             output,
@@ -119,6 +149,12 @@ class ExportFactory:
         return "%s_export.pdf" % model_name, "application/pdf", output.getvalue()
 
     def _records_to_docx(self, model_name, fields_list, data):
+        """Mô tả: Tạo tệp DOCX tối giản chứa bảng dữ liệu.
+        Input: tên model, danh sách trường và dữ liệu.
+        Output: Tuple tên tệp, MIME type và bytes DOCX.
+        Ràng buộc: Nội dung ô được escape trước khi ghi XML.
+        Ngoại lệ: Ngoại lệ tạo ZIP/XML được truyền lên.
+        """
         rows = ["<w:tr>%s</w:tr>" % "".join(self._docx_cell(field) for field in fields_list)]
         for row in data:
             rows.append(
@@ -154,4 +190,10 @@ class ExportFactory:
         )
 
     def _docx_cell(self, value):
+        """Mô tả: Tạo XML WordprocessingML cho một ô bảng.
+        Input: value - giá trị có thể chuyển thành chuỗi.
+        Output: Chuỗi XML của một ô DOCX.
+        Ràng buộc: Ký tự đặc biệt XML luôn được escape.
+        Ngoại lệ: Ngoại lệ khi chuyển value sang chuỗi được truyền lên.
+        """
         return "<w:tc><w:p><w:r><w:t>%s</w:t></w:r></w:p></w:tc>" % html.escape(str(value))

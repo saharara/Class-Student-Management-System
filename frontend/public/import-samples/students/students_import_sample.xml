@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records>
+  <record>
+    <code>STU_XML_001</code><fullname>Nguyễn Văn An</fullname><dob>2008-05-12</dob><sex>1</sex>
+    <homecity>Hà Nội</homecity><address>12 Nguyễn Trãi</address><hobbies>3</hobbies><hair_color>#111111</hair_color>
+    <email>stu_xml_001@example.com</email><facebook>https://facebook.com</facebook><class_id>CLS_CSV_001</class_id>
+    <username>stu_xml_001</username><password>Student@123</password><description>Học sinh import từ XML</description>
+  </record>
+  <record>
+    <code>STU_XML_002</code><fullname>Trần Thị Bình</fullname><dob>2008-09-20</dob><sex>0</sex>
+    <homecity>Đà Nẵng</homecity><address>25 Hải Phòng</address><hobbies>5</hobbies><hair_color>#3b2a23</hair_color>
+    <email>stu_xml_002@example.com</email><facebook>https://facebook.com</facebook><class_id>CLS_CSV_001</class_id>
+    <username>stu_xml_002</username><password>Student@123</password><description>Học sinh import từ XML</description>
+  </record>
+</records>

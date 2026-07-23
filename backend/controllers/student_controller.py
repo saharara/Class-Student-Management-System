@@ -1,10 +1,8 @@
-from odoo import http
-
-from .api_utils import RestApiMixin
 from ..models.hobby_constants import HOBBY_OPTIONS
+from .base_controller import BaseController
 
 
-class StudentController(http.Controller, RestApiMixin):
+class StudentController(BaseController):
     MODEL = "tra_student"
     FIELDS = [
         "id",
@@ -85,69 +83,9 @@ class StudentController(http.Controller, RestApiMixin):
         "username",
         "description",
     ]
-    UNIQUE_COPY_FIELDS = ["code", "email", "username"]
+    UNIQUE_COPY_FIELDS = ["code", "username"]
+    COPY_VALUES = {"email": ""}
     DEFAULT_ORDER = "code"
 
-
-    @http.route("/edmanage-student/hobbies", type="http", auth="user", methods=["GET"], csrf=False)
-    def hobbies_route(self, **kw):
+    def hobbies(self):
         return self._service().serializer.success(HOBBY_OPTIONS)
-    @http.route("/edmanage-student", type="http", auth="user", methods=["GET"], csrf=False)
-    def get_all_route(self, **kw):
-        return self.get_all()
-
-    @http.route("/edmanage-student", type="http", auth="user", methods=["POST"], csrf=False)
-    def store_route(self, **kw):
-        return self.store()
-
-    @http.route(
-        ["/edmanage-student/page/<int:init>", "/edmanage-student/page/<int:init>/"],
-        type="http",
-        auth="user",
-        methods=["GET"],
-        csrf=False,
-    )
-    def get_by_page_route(self, init=1, **kw):
-        return self.get_by_page(init)
-
-    @http.route("/edmanage-student/copy", type="http", auth="user", methods=["POST"], csrf=False)
-    def mass_copy_route(self, **kw):
-        return self.mass_copy()
-
-    @http.route("/edmanage-student/delete", type="http", auth="user", methods=["DELETE"], csrf=False)
-    def mass_delete_route(self, **kw):
-        return self.mass_delete()
-
-    @http.route("/edmanage-student/import", type="http", auth="user", methods=["POST"], csrf=False)
-    def import_route(self, **kw):
-        return self.import_data()
-
-    @http.route("/edmanage-student/export", type="http", auth="user", methods=["GET"], csrf=False)
-    def export_route(self, **kw):
-        return self.export_data()
-
-    @http.route(
-        ["/edmanage-student/export/<int:record_id>", "/edmanage-student/export/<int:record_id>/"],
-        type="http",
-        auth="user",
-        methods=["GET"],
-        csrf=False,
-    )
-    def export_by_id_route(self, record_id, **kw):
-        return self.export_by_id(record_id)
-
-    @http.route("/edmanage-student/<int:record_id>", type="http", auth="user", methods=["GET"], csrf=False)
-    def get_by_id_route(self, record_id, **kw):
-        return self.get_by_id(record_id)
-
-    @http.route("/edmanage-student/<int:record_id>", type="http", auth="user", methods=["PUT"], csrf=False)
-    def update_route(self, record_id, **kw):
-        return self.update(record_id)
-
-    @http.route("/edmanage-student/<int:record_id>", type="http", auth="user", methods=["POST"], csrf=False)
-    def copy_or_update_route(self, record_id, **kw):
-        return self.copy_or_update(record_id)
-
-    @http.route("/edmanage-student/<int:record_id>", type="http", auth="user", methods=["DELETE"], csrf=False)
-    def destroy_route(self, record_id, **kw):
-        return self.destroy(record_id)

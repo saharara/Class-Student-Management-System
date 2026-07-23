@@ -62,4 +62,16 @@ studentService.massCopy = ids => api({
   data: { idlist: ids },
 });
 
+studentService.importData = data => api({
+  url: `${STUDENT_ENDPOINT}/import`,
+  method: 'post',
+  data,
+});
+
+studentService.exportData = params => api({
+  url: `${STUDENT_ENDPOINT}/export`,
+  method: 'get',
+  params,
+});
+
 export default studentService;

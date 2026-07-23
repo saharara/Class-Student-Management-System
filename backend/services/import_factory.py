@@ -12,6 +12,12 @@ except ImportError:
 
 class ImportFactory:
     def rows(self, payload):
+        """Mô tả: Giải mã tệp import và chuyển thành các dòng dữ liệu.
+        Input: payload chứa attachment base64 và type hoặc file_type.
+        Output: Tuple (rows, error_code, error_message).
+        Ràng buộc: Hỗ trợ JSON, CSV, XML và XLSX; tệp phải có dữ liệu.
+        Ngoại lệ: Không truyền lỗi phân tích lên; trả mã J601, J604 hoặc J605.
+        """
         attachment = payload.get("attachment")
         if not attachment:
             return None, "J604", "Tệp dữ liệu chưa được tải lên."
@@ -43,15 +49,33 @@ class ImportFactory:
         return rows, None, None
 
     def _json_to_rows(self, raw_content):
+        """Mô tả: Chuyển nội dung JSON thô thành danh sách dòng.
+        Input: raw_content - bytes JSON mã hóa UTF-8.
+        Output: Giá trị data của object hoặc dữ liệu JSON gốc.
+        Ràng buộc: Nội dung phải là JSON hợp lệ.
+        Ngoại lệ: UnicodeDecodeError hoặc JSONDecodeError được truyền lên.
+        """
         content = raw_content.decode("utf-8-sig")
         data = json.loads(content)
         return data.get("data", data) if isinstance(data, dict) else data
 
     def _csv_to_rows(self, raw_content):
+        """Mô tả: Chuyển nội dung CSV thành danh sách dictionary.
+        Input: raw_content - bytes CSV mã hóa UTF-8.
+        Output: Danh sách dòng với khóa lấy từ header.
+        Ràng buộc: Dòng đầu tiên được dùng làm tên cột.
+        Ngoại lệ: UnicodeDecodeError hoặc lỗi csv được truyền lên.
+        """
         content = raw_content.decode("utf-8-sig")
         return list(csv.DictReader(io.StringIO(content)))
 
     def _xml_to_rows(self, raw_content):
+        """Mô tả: Chuyển các node record hoặc row trong XML thành dữ liệu.
+        Input: raw_content - bytes XML.
+        Output: Danh sách dictionary của các phần tử con.
+        Ràng buộc: Ưu tiên node record, chỉ đọc node row khi không có record.
+        Ngoại lệ: ParseError khi XML không hợp lệ.
+        """
         root = ET.fromstring(raw_content)
         rows = []
         for record_node in root.findall(".//record"):
@@ -62,6 +86,12 @@ class ImportFactory:
         return rows
 
     def _xlsx_to_rows(self, raw_content):
+        """Mô tả: Đọc worksheet đầu tiên của tệp XLSX thành các dòng dữ liệu.
+        Input: raw_content - bytes của workbook XLSX.
+        Output: Danh sách dictionary, bỏ qua dòng hoàn toàn rỗng.
+        Ràng buộc: Dòng đầu là header và thư viện openpyxl phải sẵn sàng.
+        Ngoại lệ: Ngoại lệ đọc workbook của openpyxl được truyền lên.
+        """
         workbook = openpyxl.load_workbook(io.BytesIO(raw_content), read_only=True, data_only=True)
         worksheet = workbook.active
         rows = list(worksheet.iter_rows(values_only=True))

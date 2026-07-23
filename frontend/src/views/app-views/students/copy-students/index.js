@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar, Button, Input, message, Radio, Select, Table, Tooltip } from 'antd';
-import { ArrowLeftOutlined, DeleteOutlined, EditOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import { APP_PREFIX_PATH } from 'configs/AppConfig';
 import ClassroomService from 'services/ClassroomService';
@@ -8,7 +15,7 @@ import StudentService from 'services/StudentService';
 import { unwrapRecords } from 'services/OdooApiService';
 import { getHobbyLabels, getHobbyMask, normalizeHobbyOptions } from 'constants/HobbyOptions';
 import confirmDiscardChanges from 'utils/confirmDiscardChanges';
-import { getNextCopyEmail, getNextCopyValue } from 'utils/copyFieldValue';
+import { getNextCopyValue } from 'utils/copyFieldValue';
 
 import './copyStudents.css';
 
@@ -62,14 +69,11 @@ const CopyStudents = () => {
       const hobbies = normalizeHobbyOptions(unwrapRecords(hobbyResponse));
       const byId = students.reduce((result, item) => ({ ...result, [Number(item.id)]: item }), {});
       const usedCodes = students.map(item => String(item.code || '').toLowerCase());
-      const usedEmails = students.map(item => String(item.email || '').toLowerCase());
       const usedUsernames = students.map(item => String(item.username || '').toLowerCase());
       const copies = selectedIds.map(id => byId[id]).filter(Boolean).map(source => {
         const code = getNextCopyValue(source.code || '', usedCodes, 50);
-        const email = getNextCopyEmail(source.email || '', usedEmails, 256);
         const username = getNextCopyValue(source.username || '', usedUsernames, 50);
         usedCodes.push(code.toLowerCase());
-        usedEmails.push(email.toLowerCase());
         usedUsernames.push(username.toLowerCase());
         return {
           key: String(source.id),
@@ -81,7 +85,7 @@ const CopyStudents = () => {
           address: source.address || '',
           hobbies: hobbies.filter(item => Math.floor(Number(source.hobbies || 0) / item.mask) % 2 === 1).map(item => item.code),
           hairColor: source.hair_color || '#111111',
-          email,
+          email: '',
           facebook: source.facebook || '',
           classId: getClassId(source.class_id),
           username,
@@ -93,7 +97,7 @@ const CopyStudents = () => {
       });
       setExistingUnique({
         codes: students.map(item => String(item.code || '').toLowerCase()),
-        emails: students.map(item => String(item.email || '').toLowerCase()),
+        emails: students.map(item => String(item.email || '').toLowerCase()).filter(Boolean),
         usernames: students.map(item => String(item.username || '').toLowerCase()),
       });
       setClasses(classRecords);
@@ -147,19 +151,47 @@ const CopyStudents = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const getRowErrors = (row, allRows = rows) => {
+    const errors = [];
+    const code = row.code.trim().toLowerCase();
+    const username = row.username.trim().toLowerCase();
+
+    if (!code) errors.push('Thiếu mã học sinh');
+    if (!row.fullname.trim()) errors.push('Thiếu họ tên');
+    if (!row.dob) errors.push('Thiếu ngày sinh');
+    else if (new Date(row.dob) >= new Date()) errors.push('Ngày sinh phải trước hiện tại');
+    if (!row.classId || !classes.some(item => item.id === Number(row.classId))) errors.push('Lớp học không hợp lệ');
+    const email = row.email.trim().toLowerCase();
+    if (!email) errors.push('Thiếu email');
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('Email không đúng định dạng');
+    else if (existingUnique.emails.includes(email)
+      || allRows.filter(item => item.email.trim().toLowerCase() === email).length > 1) {
+      errors.push('Email bị trùng');
+    }
+    if (!username) errors.push('Thiếu tài khoản');
+    if (!row.password) errors.push('Thiếu mật khẩu');
+    else if (!/^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[^A-Za-z0-9\s]).{8,}$/.test(row.password)) {
+      errors.push('Mật khẩu chưa đủ mạnh');
+    }
+    if (row.facebook.trim() && !/^https?:\/\/[0-9a-zA-Z.\-_]+$/.test(row.facebook.trim())) {
+      errors.push('Facebook không đúng định dạng');
+    }
+    if (code && (existingUnique.codes.includes(code)
+      || allRows.filter(item => item.code.trim().toLowerCase() === code).length > 1)) {
+      errors.push('Mã học sinh bị trùng');
+    }
+    if (username && (existingUnique.usernames.includes(username)
+      || allRows.filter(item => item.username.trim().toLowerCase() === username).length > 1)) {
+      errors.push('Tài khoản bị trùng');
+    }
+    return errors;
+  };
+
   const validateRows = () => {
     if (!rows.length) return 'Không còn học sinh nào để sao chép';
-    if (rows.some(row => !row.code.trim() || !row.fullname.trim() || !row.dob || !row.classId || !row.email.trim() || !row.username.trim() || !row.password)) {
-      return 'Vui lòng nhập đủ mã, họ tên, ngày sinh, lớp học, email, tài khoản và mật khẩu';
-    }
-    if (rows.some(row => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email.trim()))) return 'Email học sinh không đúng định dạng';
-    const codes = rows.map(row => row.code.trim().toLowerCase());
-    const emails = rows.map(row => row.email.trim().toLowerCase());
-    const usernames = rows.map(row => row.username.trim().toLowerCase());
-    if (new Set(codes).size !== codes.length || codes.some(value => existingUnique.codes.includes(value))) return 'Mã học sinh bị trùng';
-    if (new Set(emails).size !== emails.length || emails.some(value => existingUnique.emails.includes(value))) return 'Email học sinh bị trùng';
-    if (new Set(usernames).size !== usernames.length || usernames.some(value => existingUnique.usernames.includes(value))) return 'Tài khoản học sinh bị trùng';
-    return '';
+    const invalidIndex = rows.findIndex(row => getRowErrors(row).length);
+    if (invalidIndex < 0) return '';
+    return `Dòng ${invalidIndex + 1}: ${getRowErrors(rows[invalidIndex]).join(', ')}`;
   };
 
   const saveCopies = async () => {
@@ -178,7 +210,7 @@ const CopyStudents = () => {
           hobbies: getHobbyMask(row.hobbies, hobbyOptions), hair_color: row.hairColor,
           email: row.email.trim(), facebook: row.facebook.trim(),
           class_id: selectedClass?.code || Number(row.classId), username: row.username.trim(),
-          password: row.password, description: row.description.trim(),
+          password: row.password, description: row.description.trim(), action: 'copy',
         };
         if (row.photoBase64) {
           payload.attachment = row.photoBase64;
@@ -206,10 +238,41 @@ const CopyStudents = () => {
     { title: 'Địa chỉ', dataIndex: 'address', width: 130, ellipsis: true },
     { title: 'Sở thích', width: 110, ellipsis: true, render: (_, row) => getHobbyLabels(getHobbyMask(row.hobbies, hobbyOptions), hobbyOptions).join(', ') },
     { title: 'Màu tóc', dataIndex: 'hairColor', width: 84 },
-    { title: 'Email', dataIndex: 'email', width: 140, ellipsis: true },
-    { title: 'Facebook', dataIndex: 'facebook', width: 100, ellipsis: true },
+    { title: 'Email', dataIndex: 'email', width: 170, ellipsis: true },
+    { title: 'Facebook', dataIndex: 'facebook', width: 120, ellipsis: true },
     {
-      title: 'Hành động', width: 102, align: 'center', render: (_, row) => (
+      title: 'Lớp học',
+      width: 150,
+      ellipsis: true,
+      render: (_, row) => {
+        const selectedClass = classes.find(item => item.id === Number(row.classId));
+        return selectedClass ? `${selectedClass.code} - ${selectedClass.name}` : '';
+      },
+    },
+    { title: 'Tài khoản', dataIndex: 'username', width: 130, ellipsis: true },
+    { title: 'Mật khẩu', dataIndex: 'password', width: 130, ellipsis: true },
+    { title: 'Mô tả', dataIndex: 'description', width: 160, ellipsis: true },
+    {
+      title: 'Kiểm tra',
+      width: 260,
+      align: 'center',
+      fixed: 'right',
+      render: (_, row) => {
+        const rowErrors = getRowErrors(row);
+        return rowErrors.length ? (
+          <div className="copy-students-status-block">
+            <span className="copy-students-status is-error"><CloseCircleOutlined /> Có lỗi</span>
+            <div className="copy-students-status-errors">
+              {rowErrors.map(error => <div key={error}>• {error}</div>)}
+            </div>
+          </div>
+        ) : (
+          <span className="copy-students-status is-ok"><CheckCircleOutlined /> OK</span>
+        );
+      },
+    },
+    {
+      title: 'Hành động', width: 102, align: 'center', fixed: 'right', render: (_, row) => (
         <div className="copy-students-row-actions">
           <Tooltip title="Xóa"><DeleteOutlined onClick={() => removeRows([row.key])} /></Tooltip>
           <Tooltip title="Sửa"><EditOutlined className={editingKey === row.key ? 'is-active' : ''} onClick={() => setEditingKey(row.key)} /></Tooltip>
@@ -231,7 +294,7 @@ const CopyStudents = () => {
       <div className="copy-students-content">
         <Button danger className="copy-students-remove-selected" onClick={removeSelected}>Xóa dữ liệu đã chọn</Button>
         <Table bordered loading={loading} columns={columns} dataSource={rows} pagination={false} size="small"
-          rowSelection={{ selectedRowKeys, onChange: keys => setSelectedRowKeys(keys.map(String)) }} scroll={{ x: 1280 }} />
+          rowSelection={{ fixed: true, selectedRowKeys, onChange: keys => setSelectedRowKeys(keys.map(String)) }} scroll={{ x: 2300 }} />
 
         {editingRow && (
           <div className="copy-students-editor">
@@ -250,7 +313,7 @@ const CopyStudents = () => {
                 <EditorField label="Ngày sinh" required><Input type="date" value={editingRow.dob} onChange={event => updateRow('dob', event.target.value)} /></EditorField>
                 <EditorField label="Giới tính" required><Radio.Group value={editingRow.sex} onChange={event => updateRow('sex', event.target.value)}><Radio value>Nam</Radio><Radio value={false}>Nữ</Radio></Radio.Group></EditorField>
                 <EditorField label="Lớp học" required><Select value={editingRow.classId || undefined} placeholder="Lớp học" onChange={value => updateRow('classId', Number(value))}>{classes.map(item => <Option key={item.id} value={item.id}>{item.code} - {item.name}</Option>)}</Select></EditorField>
-                <EditorField label="Email" required><Input value={editingRow.email} placeholder="Email" onChange={event => updateRow('email', event.target.value)} /></EditorField>
+                <EditorField label="Email" required><Input value={editingRow.email} placeholder="Nhập email cho bản sao" onChange={event => updateRow('email', event.target.value)} /></EditorField>
                 <EditorField label="Facebook"><Input value={editingRow.facebook} placeholder="Facebook" onChange={event => updateRow('facebook', event.target.value)} /></EditorField>
                 <EditorField label="Tài khoản" required><Input value={editingRow.username} placeholder="Tài khoản" onChange={event => updateRow('username', event.target.value)} /></EditorField>
                 <EditorField label="Mật khẩu" required><Input.Password value={editingRow.password} placeholder="Mật khẩu" onChange={event => updateRow('password', event.target.value)} /></EditorField>

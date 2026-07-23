@@ -279,6 +279,7 @@
         button.danger {
             color: #ff4d6d;
         }
+
     }
 
     .student-search-wrap {
@@ -1027,4 +1028,34 @@
     .add-student-frame {
         padding: 14px 12px 12px;
     }
+}
+
+/* ================= GLOBAL BACK ARROW OVERRIDE ================= */
+body button.app-back-arrow-btn {
+    width: 64px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #12377f !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    font-size: 52px !important;
+    line-height: 1 !important;
+    box-shadow: none !important;
+}
+body button.app-back-arrow-btn:hover,
+body button.app-back-arrow-btn:focus {
+    color: #0b2d72 !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+body button.app-back-arrow-btn .anticon,
+body button.app-back-arrow-btn svg {
+    display: block !important;
+    width: 1em !important;
+    height: 1em !important;
 }
