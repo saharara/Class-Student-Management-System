@@ -56,6 +56,7 @@
   box-shadow: 0 4px 10px rgba(15, 34, 58, .22);
 }
 .export-data-filter-menu label { display: flex; align-items: center; gap: 12px; min-height: 40px; margin: 0; padding: 7px 12px; border-bottom: 1px solid #c4cad2; color: #111; font-weight: 700; }
+.export-data-filter-menu label.is-required { background: #d1d1d1; color: #111; cursor: default; }
 .export-data-filter-menu .ant-checkbox-disabled + span { color: #111; }
 .export-data-filter-apply { width: 100%; height: 44px; border: 0; background: #153d91; color: #fff; font-weight: 800; cursor: pointer; }
 
@@ -79,4 +80,12 @@
   .export-data-page { padding: 12px; }
   .export-data-toolbar { align-items: flex-start; flex-direction: column; }
   .export-data-toolbar-actions { width: 100%; flex-wrap: wrap; }
+}
+.export-data-filter-menu .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner {
+  border-color: #000 !important;
+  background: #000 !important;
+}
+.export-data-filter-menu .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: #fff !important;
+  opacity: 1;
 }

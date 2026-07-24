@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Avatar, Button, Card, Checkbox, Input, message, Pagination, Table, Tooltip } from 'antd';
+import { Avatar, Button, Card, Checkbox, Dropdown, Input, Menu, message, Pagination, Table, Tooltip } from 'antd';
 import {
   CaretDownOutlined,
   CaretUpOutlined,
@@ -21,13 +21,25 @@ import { unwrapRecords } from 'services/OdooApiService';
 import { getHobbyLabels, normalizeHobbyOptions } from 'constants/HobbyOptions';
 import { getPinnedTablePage } from 'utils/pinnedTableSelection';
 import confirmDelete from 'utils/confirmDelete';
+import { downloadExportResponse } from 'utils/exportData';
 
+
+const ROW_EXPORT_TYPES = [
+  { key: 'xlsx', label: 'Xlsx' },
+  { key: 'csv', label: 'CSV' },
+  { key: 'json', label: 'Json' },
+  { key: 'docx', label: 'Docx' },
+];
+const ROW_EXPORT_FIELDS = [
+  'id', 'attachment', 'code', 'fullname', 'dob', 'sex', 'homecity', 'address',
+  'hobbies', 'hair_color', 'email', 'facebook', 'class_id', 'username', 'description'
+];
 
 const initialColumns = [
+  { title: 'STT', dataIndex: 'stt', key: 'stt', width: 58, type: 'index' },
   { title: 'Mã học sinh', shortTitle: 'Mã', dataIndex: 'code', key: 'code', width: 120 },
   { title: 'Họ và tên', shortTitle: 'Họ tên', dataIndex: 'name', key: 'name', width: 165 },
   { title: 'Ảnh', dataIndex: 'avatar', key: 'avatar', width: 76, type: 'avatar' },
-  { title: 'STT', dataIndex: 'stt', key: 'stt', width: 58, type: 'index' },
   { title: 'Ngày sinh', dataIndex: 'birthday', key: 'birthday', width: 132 },
   { title: 'Giới tính', dataIndex: 'gender', key: 'gender', width: 96 },
   { title: 'Quê quán', dataIndex: 'hometown', key: 'hometown', width: 120 },
@@ -368,12 +380,38 @@ const Students = () => {
     history.push(APP_PREFIX_PATH + '/students/' + record.id);
   };
 
+  const handleDownloadOne = async (record, type) => {
+    try {
+      const response = await StudentService.exportData({
+        idlist: JSON.stringify([record.id]),
+        type,
+        columnlist: JSON.stringify(ROW_EXPORT_FIELDS),
+      });
+      downloadExportResponse(response, type, 'student_' + (record.code || record.id));
+      message.success(`Đã tải học sinh dạng ${type.toUpperCase()}`);
+    } catch (error) {
+      message.error(error.message || 'Tải dữ liệu học sinh thất bại');
+    }
+  };
   const ActionButtons = ({ record }) => (
     <div className="student-table-actions">
       <Tooltip title="Xóa"><DeleteOutlined style={{ color: '#ff1f3d' }} onClick={() => handleDeleteOne(record)} /></Tooltip>
       <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853', cursor: 'pointer' }} onClick={() => history.push(`${APP_PREFIX_PATH}/students/${record.id}/edit`)} /></Tooltip>
       <Tooltip title="Nhân bản"><CopyOutlined style={{ color: '#5b6cff' }} onClick={() => handleCopyOne(record)} /></Tooltip>
-      <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} /></Tooltip>
+      <Dropdown
+        trigger={['click']}
+        placement="bottomRight"
+        overlay={(
+          <Menu onClick={({ key, domEvent }) => {
+            domEvent.stopPropagation();
+            handleDownloadOne(record, key);
+          }}>
+            {ROW_EXPORT_TYPES.map(type => <Menu.Item key={type.key}>{type.label}</Menu.Item>)}
+          </Menu>
+        )}
+      >
+        <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} onClick={event => event.stopPropagation()} /></Tooltip>
+      </Dropdown>
       <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844', cursor: 'pointer' }} onClick={() => handleViewDetail(record)} /></Tooltip>
     </div>
   );
@@ -558,6 +596,7 @@ const Students = () => {
                   <label
                     key={column.key}
                     className={`student-column-filter-item ${lockedVisibleColumnKeys.includes(column.key) ? 'is-disabled' : ''}`}
+                    style={{ backgroundColor: lockedVisibleColumnKeys.includes(column.key) ? '#cfcfcf' : '#fff' }}
                   >
                     <Checkbox
                       checked={visibleColumnKeys.includes(column.key)}

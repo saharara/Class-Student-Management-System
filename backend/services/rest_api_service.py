@@ -360,27 +360,33 @@ class RestApiService:
         return self.serializer.success({"ids": ids}, "Xóa thành công.")
 
     def import_data(self):
-        """Mô tả: Import nhiều bản ghi từ tệp được gửi trong request.
-        Input: Payload chứa attachment và loại tệp.
-        Output: JSON response chứa các bản ghi đã tạo.
-        Ràng buộc: Định dạng và từng dòng phải hợp lệ với model.
-        Ngoại lệ: Lỗi tệp, ValidationError và ORM được chuyển thành lỗi API.
+        """Đọc tệp import để xem trước; không ghi dữ liệu vào database.
+
+        Mọi dòng đọc được đều được trả về cùng `_preview_id` và `_errors` để
+        frontend hiển thị trên grid. Việc tạo bản ghi chỉ thực hiện khi người
+        dùng xác nhận Lưu qua endpoint create thông thường.
         """
         rows, error_code, error = self.import_factory.rows(self.normalizer.payload())
         if error:
             return self.serializer.error(error_code, error)
 
-        try:
-            records = self.model.create([self.normalizer.writable_values(row) for row in rows])
-        except ValidationError as exc:
-            return self.serializer.error("E603", self._user_error_message(exc))
-        except Exception as exc:
-            return self.serializer.error("E600", self._user_error_message(exc, action="import"))
-        return self.serializer.success(
-            self.serializer.read_records(records, self.fields),
-            "Import thành công.",
-        )
+        preview_rows = []
+        for index, row in enumerate(rows, start=1):
+            source = dict(row) if isinstance(row, dict) else {}
+            field_errors = self.validator.field_errors(
+                self.model_name,
+                self.model,
+                source,
+                self.normalizer,
+            )
+            source["_preview_id"] = index
+            source["_errors"] = field_errors
+            preview_rows.append(source)
 
+        return self.serializer.success(
+            preview_rows,
+            "Đọc tệp thành công. Vui lòng kiểm tra dữ liệu trước khi lưu.",
+        )
     def export_by_id(self, record_id):
         """Mô tả: Xuất một bản ghi theo định dạng yêu cầu.
         Input: record_id, columnlist và type từ request.

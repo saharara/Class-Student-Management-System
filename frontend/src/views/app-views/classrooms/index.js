@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Checkbox, Input, message, Pagination, Table, Tooltip } from 'antd';
+import { Button, Card, Checkbox, Dropdown, Input, Menu, message, Pagination, Table, Tooltip } from 'antd';
 import {
   CaretDownOutlined,
   CaretUpOutlined,
@@ -19,6 +19,15 @@ import ClassroomService from 'services/ClassroomService';
 import { unwrapRecords } from 'services/OdooApiService';
 import { getPinnedTablePage } from 'utils/pinnedTableSelection';
 import confirmDelete from 'utils/confirmDelete';
+import { downloadExportResponse } from 'utils/exportData';
+
+const ROW_EXPORT_TYPES = [
+  { key: 'xlsx', label: 'Xlsx' },
+  { key: 'csv', label: 'CSV' },
+  { key: 'json', label: 'Json' },
+  { key: 'docx', label: 'Docx' },
+];
+const ROW_EXPORT_FIELDS = ['id', 'code', 'name', 'description', 'student_count'];
 
 const initialColumns = [
   { title: 'STT', dataIndex: 'stt', key: 'stt', width: 80, type: 'index' },
@@ -272,6 +281,19 @@ const Classrooms = () => {
   const handleViewDetail = record => {
     history.push(APP_PREFIX_PATH + '/classrooms/' + record.id);
   };
+  const handleDownloadOne = async (record, type) => {
+    try {
+      const response = await ClassroomService.exportData({
+        idlist: JSON.stringify([record.id]),
+        type,
+        columnlist: JSON.stringify(ROW_EXPORT_FIELDS),
+      });
+      downloadExportResponse(response, type, 'classroom_' + (record.code || record.id));
+      message.success(`Đã tải lớp học dạng ${type.toUpperCase()}`);
+    } catch (error) {
+      message.error(error.message || 'Tải dữ liệu lớp học thất bại');
+    }
+  };
   const ActionButtons = ({ record }) => {
     const deleteDisabled = hasStudents(record);
 
@@ -288,7 +310,20 @@ const Classrooms = () => {
         </Tooltip>
         <Tooltip title="Sửa"><EditOutlined style={{ color: '#00c853', cursor: 'pointer' }} onClick={() => history.push(`${APP_PREFIX_PATH}/classrooms/${record.id}/edit`)} /></Tooltip>
         <Tooltip title="Nhân bản"><CopyOutlined style={{ color: '#5b6cff' }} onClick={() => handleCopyOne(record)} /></Tooltip>
-        <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} /></Tooltip>
+        <Dropdown
+        trigger={['click']}
+        placement="bottomRight"
+        overlay={(
+          <Menu onClick={({ key, domEvent }) => {
+            domEvent.stopPropagation();
+            handleDownloadOne(record, key);
+          }}>
+            {ROW_EXPORT_TYPES.map(type => <Menu.Item key={type.key}>{type.label}</Menu.Item>)}
+          </Menu>
+        )}
+      >
+        <Tooltip title="Tải xuống"><DownloadOutlined style={{ color: '#9aa4b2' }} onClick={event => event.stopPropagation()} /></Tooltip>
+      </Dropdown>
         <Tooltip title="Xem"><EyeOutlined style={{ color: '#0f2844', cursor: 'pointer' }} onClick={() => handleViewDetail(record)} /></Tooltip>
       </div>
     );
@@ -410,6 +445,7 @@ const Classrooms = () => {
                   <label
                     key={column.key}
                     className={`student-column-filter-item ${lockedVisibleColumnKeys.includes(column.key) ? 'is-disabled' : ''}`}
+                    style={{ backgroundColor: lockedVisibleColumnKeys.includes(column.key) ? '#cfcfcf' : '#fff' }}
                   >
                     <Checkbox
                       checked={visibleColumnKeys.includes(column.key)}

@@ -176,9 +176,20 @@ class ApiNormalizer:
             except (TypeError, ValueError) as exc:
                 raise ValidationError("%s phải là số nguyên." % field_name) from exc
 
+        if field.type == "boolean":
+            if isinstance(value, str):
+                normalized = value.strip().lower()
+                if normalized in ("1", "true", "yes", "y", "nam"):
+                    return True
+                if normalized in ("0", "false", "no", "n", "nữ", "nu"):
+                    return False
+                raise ValidationError("%s không phải giá trị đúng/sai hợp lệ." % field_name)
+            return bool(value)
+
         return value
 
     def ids(self, payload):
+
         """Mô tả: Chuẩn hóa idlist hoặc ids thành danh sách số nguyên.
         Input: payload có idlist/ids dạng JSON string, CSV string, int hoặc list.
         Output: Danh sách id số nguyên hợp lệ.

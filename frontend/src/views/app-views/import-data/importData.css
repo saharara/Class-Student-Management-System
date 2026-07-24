@@ -121,33 +121,33 @@
 .import-data-filter-wrap { position: relative; }
 .import-data-filter-menu {
   position: absolute;
-  top: 50px;
+  top: 48px;
   right: 0;
   z-index: 50;
-  min-width: 190px;
+  width: 168px;
   overflow: hidden;
-  border: 1px solid #8a96a6;
+  border: 1px solid #9da8b5;
   background: #fff;
-  box-shadow: 0 4px 10px rgba(15, 34, 58, .22);
+  box-shadow: 0 5px 12px rgba(15, 34, 58, .18);
 }
 .import-data-filter-menu label {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 44px;
+  gap: 8px;
+  height: 34px;
   margin: 0;
-  padding: 7px 13px;
-  border-bottom: 1px solid #aeb6c0;
+  padding: 0 10px;
+  border-bottom: 1px solid #c7ced7;
   color: #111;
   font-weight: 700;
   cursor: pointer;
 }
-.import-data-filter-menu label.is-required { cursor: default; }
+.import-data-filter-menu label.is-required { background: #d1d1d1; color: #111; cursor: not-allowed; }
 .import-data-filter-menu .ant-checkbox-inner {
-  width: 28px;
-  height: 28px;
-  border-color: #111;
-  border-radius: 3px;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #111;
+  border-radius: 0;
 }
 .import-data-filter-menu .ant-checkbox-checked .ant-checkbox-inner,
 .import-data-filter-menu .ant-checkbox-disabled.ant-checkbox-checked .ant-checkbox-inner {
@@ -162,12 +162,12 @@
 .import-data-filter-menu .ant-checkbox-disabled + span { color: #111; }
 .import-data-filter-apply {
   width: 100%;
-  height: 46px;
+  height: 34px;
   border: 0;
-  background: #153d91;
+  background: #12377f;
   color: #fff;
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
 }
 .import-data-filter-apply:hover { background: #0e2f76; }

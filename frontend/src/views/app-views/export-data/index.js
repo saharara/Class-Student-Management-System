@@ -16,7 +16,13 @@ import { downloadExportResponse } from 'utils/exportData';
 
 import './exportData.css';
 
-const EXPORT_TYPES = ['xlsx', 'csv', 'json', 'xml'];
+const EXPORT_TYPES = ['xlsx', 'csv', 'json', 'docx'];
+const EXPORT_TYPE_LABELS = {
+  xlsx: 'Xlsx',
+  csv: 'CSV',
+  json: 'Json',
+  docx: 'Docx',
+};
 
 const RESOURCE_CONFIG = {
   classrooms: {
@@ -188,7 +194,7 @@ const ExportData = ({ resource }) => {
             {showExportMenu && (
               <div className="export-data-download-menu">
                 {EXPORT_TYPES.map(type => (
-                  <button type="button" key={type} onClick={() => handleDownload(type)}>{type.toUpperCase()}</button>
+                  <button type="button" key={type} onClick={() => handleDownload(type)}>{EXPORT_TYPE_LABELS[type]}</button>
                 ))}
               </div>
             )}
@@ -200,7 +206,7 @@ const ExportData = ({ resource }) => {
                 {config.columns.map(column => {
                   const required = config.requiredColumns.includes(column.dataIndex);
                   return (
-                    <label key={column.dataIndex}>
+                    <label key={column.dataIndex} className={required ? 'is-required' : ''}>
                       <Checkbox
                         checked={pendingColumnKeys.includes(column.dataIndex)}
                         disabled={required}

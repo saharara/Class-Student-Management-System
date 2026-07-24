@@ -93,9 +93,10 @@ const ImportData = ({ resource }) => {
     .map(field => field.key);
 
   const getRowValidationErrors = row => {
-    const errors = config.fields
+    const errors = Object.values(row._errors || {}).filter(Boolean);
+    errors.push(...config.fields
       .filter(field => field.required && !String(row[field.key] || '').trim())
-      .map(field => `Thiếu ${field.label}`);
+      .map(field => `Thiếu ${field.label}`));
 
     if (row.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(row.email))) {
       errors.push('Email không hợp lệ');
@@ -113,8 +114,9 @@ const ImportData = ({ resource }) => {
       }
     });
 
-    return errors;
+    return [...new Set(errors.filter(Boolean))];
   };
+
   const editingRow = rows.find(row => String(row.id) === editingKey);
   const samplePrefix = resource === 'students' ? 'students' : 'classes';
   const sampleUrl = type => `${process.env.PUBLIC_URL || ''}/import-samples/${resource}/${samplePrefix}_import_sample.${type}`;
@@ -127,19 +129,13 @@ const ImportData = ({ resource }) => {
     }), {}));
   };
 
-  const removeRows = async records => {
-    try {
-      await Promise.all(records.map(record => config.service.remove(record.id)));
-      const removedIds = new Set(records.map(record => String(record.id)));
-      setRows(current => current.filter(row => !removedIds.has(String(row.id))));
-      setSelectedRowKeys(current => current.filter(key => !removedIds.has(String(key))));
-      if (editingKey && removedIds.has(editingKey)) setEditingKey(null);
-      message.success(`Đã xóa ${records.length} ${config.title}`);
-    } catch (error) {
-      message.error(error.message || 'Xóa dữ liệu import thất bại');
-    }
+  const removeRows = records => {
+    const removedIds = new Set(records.map(record => String(record.id)));
+    setRows(current => current.filter(row => !removedIds.has(String(row.id))));
+    setSelectedRowKeys(current => current.filter(key => !removedIds.has(String(key))));
+    if (editingKey && removedIds.has(editingKey)) setEditingKey(null);
+    message.success(`Đã bỏ ${records.length} ${config.title} khỏi danh sách import`);
   };
-
   const removeSelected = () => {
     const selected = rows.filter(row => selectedRowKeys.includes(String(row.id)));
     if (!selected.length) {
@@ -165,8 +161,12 @@ const ImportData = ({ resource }) => {
       const attachment = await fileToBase64(file);
       const response = await config.service.importData({ attachment, type: normalizedType });
       const imported = Array.isArray(response?.data) ? response.data : [];
-      setRows(imported.map(item => ({ ...item, id: Number(item.id) })));
-      setSelectedRowKeys(imported.map(item => String(item.id)));
+      const previewRows = imported.map((item, index) => ({
+        ...item,
+        id: Number(item._preview_id || index + 1),
+      }));
+      setRows(previewRows);
+      setSelectedRowKeys(previewRows.map(item => String(item.id)));
       setEditingKey(null);
       message.success(response.message || `Import thành công ${imported.length} ${config.title}`);
     } catch (error) {
@@ -176,28 +176,17 @@ const ImportData = ({ resource }) => {
     }
   };
 
-  const saveEdit = async () => {
-    const missing = config.fields.find(field => field.required && !String(editingValues[field.key] || '').trim());
-    if (missing) {
-      message.error(`${missing.label} là trường bắt buộc`);
-      return;
-    }
-    setSaving(true);
-    try {
-      await config.service.update(editingRow.id, editingValues);
-      setRows(current => current.map(row => (
-        row.id === editingRow.id ? { ...row, ...editingValues } : row
-      )));
-      setEditingKey(null);
-      message.success(`Cập nhật ${config.title} thành công`);
-    } catch (error) {
-      message.error(error.message || 'Cập nhật dữ liệu import thất bại');
-    } finally {
-      setSaving(false);
-    }
+  const saveEdit = () => {
+    setRows(current => current.map(row => (
+      row.id === editingRow.id
+        ? { ...row, ...editingValues, _errors: {} }
+        : row
+    )));
+    setEditingKey(null);
+    message.success(`Đã cập nhật bản xem trước ${config.title}`);
   };
 
-  const saveImport = () => {
+  const saveImport = async () => {
     if (!rows.length) {
       message.warning('Chưa có dữ liệu import để lưu');
       return;
@@ -211,7 +200,39 @@ const ImportData = ({ resource }) => {
       message.error(`Còn ${invalidRows.length} dòng dữ liệu chưa hợp lệ`);
       return;
     }
-    message.success(`Đã lưu ${rows.length} ${config.title}`);
+
+    setSaving(true);
+    const savedIds = new Set();
+    const failedErrors = {};
+    for (const row of rows) {
+      const payload = config.fields.reduce((values, field) => {
+        if (Object.prototype.hasOwnProperty.call(row, field.key)) {
+          values[field.key] = row[field.key];
+        }
+        return values;
+      }, {});
+      try {
+        await config.service.create(payload);
+        savedIds.add(String(row.id));
+      } catch (error) {
+        const serverErrors = error.payload?.data?.errors;
+        failedErrors[String(row.id)] = serverErrors && Object.keys(serverErrors).length
+          ? serverErrors
+          : { general: error.message || 'Không thể lưu dòng dữ liệu' };
+      }
+    }
+    setSaving(false);
+
+    if (Object.keys(failedErrors).length) {
+      setRows(current => current
+        .filter(row => !savedIds.has(String(row.id)))
+        .map(row => ({ ...row, _errors: failedErrors[String(row.id)] || row._errors })));
+      setSelectedRowKeys(current => current.filter(key => !savedIds.has(String(key))));
+      message.error(`Đã lưu ${savedIds.size} dòng; còn ${Object.keys(failedErrors).length} dòng lỗi`);
+      return;
+    }
+
+    message.success(`Đã lưu ${savedIds.size} ${config.title}`);
     history.push(config.returnPath);
   };
   const columns = useMemo(() => [
@@ -361,6 +382,7 @@ const ImportData = ({ resource }) => {
         type="primary"
         className="import-data-save-button"
         disabled={!rows.length}
+        loading={saving}
         onClick={saveImport}
       >
         Lưu

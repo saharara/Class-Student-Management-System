@@ -3,6 +3,7 @@ const MIME_TYPES = {
   csv: 'text/csv;charset=utf-8',
   json: 'application/json;charset=utf-8',
   xml: 'application/xml;charset=utf-8',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 };
 
 const base64ToBlob = (buffer, mimetype) => {
