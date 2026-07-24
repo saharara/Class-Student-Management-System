@@ -54,6 +54,3 @@ npm install
 npm start
 ```
 
-## Author
-
-**Toan Pham**
